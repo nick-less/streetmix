@@ -63,9 +63,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: cypress/included:6.5.0
-      # To run Firefox, use non-root user (Firefox security restriction)
-      # https://github.com/cypress-io/github-action#firefox
-      options: --user 1001
     env:
       # We need placeholder API keys to mock some third party integrations
       PELIAS_API_KEY: ge-iampelias
