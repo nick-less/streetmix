@@ -75,6 +75,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Cache dependencies and build outputs
+        uses: actions/cache@v2
+        with:
+          path: |
+            node_modules
+            ~/.cache/Cypress
+            .cache
+            build
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node_modules-build-
       # Install NPM dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
