@@ -16,7 +16,7 @@ RUN apt-get install net-tools -y
 
 # Bundle app source
 COPY . .
-RUN npm install --only=production && npm cache clean --force --loglevel=error
+RUN npm install --force --only=production && npm cache clean --force --loglevel=error
 RUN npm run postinstall
 
 # publish app using entry script

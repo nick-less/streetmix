@@ -1,0 +1,23 @@
+version: '2'
+services:
+  db:
+    image: mdillon/postgis:11-alpine
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment: 
+      - POSTGRES_USER=streetmix
+      - POSTGRES_PASSWORD=streetmix
+      - POSTGRES_DB=streetmix
+    restart: always 
+
+  app:
+    image: streetmix-via:latest
+    ports:
+      - "127.0.0.1:8008:8000"
+    environment:
+      - PROTOCOL=http://
+      - DATABASE_URL=postgres://streetmix:streetmix@db/streetmix
+      - APP_DOMAIN=localhost:8000
+    restart: always 
+volumes:
+    db:
