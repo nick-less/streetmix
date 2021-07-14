@@ -1,7 +1,7 @@
 module.exports = {
   app_host_port: process.env.APP_DOMAIN || 'streetmix.net',
   restapi: {
-    protocol: 'https://',
+    protocol: process.env.PROTOCOL || 'https://',
     baseuri: '/api'
   },
   facebook_app_id: '162729607241489',
