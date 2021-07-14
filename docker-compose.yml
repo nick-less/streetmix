@@ -4,7 +4,7 @@ services:
     image: postgis/postgis:12-2.5
     command: -c ssl=on -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
     ports:
-      - "127.0.0.1:5432:5433"
+      - "127.0.0.1:5433:5432"
     volumes:
       - db:/var/lib/postgresql/data
     environment: 
