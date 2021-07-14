@@ -1,23 +1,20 @@
 # source FVV
-FROM node:latest as streetmix
+# use a specific version known to work
+FROM node:14.17.3-alpine3.14 as streetmix-base
 
 # define folder where app will be placed
 WORKDIR /usr/src/app
 
 # set environment variables
 ENV NODE_ENV=production 
-
-# update the image, because of some timing difference temporaly disable it
-# install additionally some debugging tools
-RUN apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false update
-RUN apt-get upgrade -y
-RUN apt-get install vim -y
-RUN apt-get install net-tools -y
+# just to be sure
+ENV ENV=production
 
 # Bundle app source
-COPY . .
-RUN npm install --force --only=production && npm cache clean --force --loglevel=error
-RUN npm run postinstall
+COPY . /usr/src/app/
+RUN npm install --only=production && npm cache clean --only=production --force --loglevel=error
+RUN npm run --only=production postinstall
+#FROM streetmix-base AS streetmix
 
 # publish app using entry script
 RUN chmod +x docker/entrypoint.sh

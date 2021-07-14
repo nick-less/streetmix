@@ -1,10 +1,5 @@
-#!/bin/bash
-
-# build node app again with docker env variables
-node app/bundle.js
-echo "1"
+#!/bin/sh
 # execute latest migration
 npx sequelize db:migrate
-echo "2"
-# publish app
+# run app
 node index.js
