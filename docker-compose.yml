@@ -4,7 +4,7 @@ services:
     image: postgis/postgis:12-2.5
     command: -c ssl=on -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:5443:5432"
     volumes:
       - db:/var/lib/postgresql/data
     environment: 
@@ -20,7 +20,7 @@ services:
     environment:
       - PROTOCOL=http://
       - OFFLINE_MODE=true
-      - DATABASE_URL=postgres://streetmix:streetmix@db:5433/streetmix
+      - DATABASE_URL=postgres://streetmix:streetmix@db:5443/streetmix
       - APP_DOMAIN=localhost:8008
     restart: always 
 volumes:
