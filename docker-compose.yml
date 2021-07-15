@@ -4,6 +4,7 @@ services:
     image: postgis/postgis:12-2.5
     command: -c ssl=on -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
     ports:
+      # reminder the pushlished port is only used from the ouside, the local app uses the std port inside the network
       - "127.0.0.1:5443:5432"
     volumes:
       - db:/var/lib/postgresql/data
@@ -20,7 +21,7 @@ services:
     environment:
       - PROTOCOL=http://
       - OFFLINE_MODE=true
-      - DATABASE_URL=postgres://streetmix:streetmix@db:5443/streetmix
+      - DATABASE_URL=postgres://streetmix:streetmix@db/streetmix
       - APP_DOMAIN=localhost:8008
     restart: always 
 volumes:
