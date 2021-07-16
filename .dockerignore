@@ -1,4 +1,8 @@
-node_modules
 .git
 .gitignore
+# no local modules
+node_modules
+# no local settings
 .env
+# no build leftovers
+build

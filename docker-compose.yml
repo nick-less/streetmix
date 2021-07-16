@@ -15,6 +15,10 @@ services:
     restart: always 
 
   app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: ./.env.docker
     image: streetmix-via:latest
     ports:
       - "127.0.0.1:8008:8000"
