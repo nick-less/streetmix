@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 # development enviroment, and start over with production enviroment
 ENV NODE_ENV=development
 # package install first, so we get an extra layer to speed up building later on
-COPY package*.json . 
+COPY package*.json ./
 # install everything
 RUN npm install --no-optional
 # copy app source
