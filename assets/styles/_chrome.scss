@@ -36,11 +36,12 @@ body.phone #loading {
 
 #error,
 #loading {
-  background-color: $sky-colour;
-  color: black;
+  color: $colour-turquoise-700;
 
   h1 {
     @include large-message-text;
+
+    margin: 0;
   }
 }
 
@@ -48,6 +49,7 @@ body.phone #loading {
   @include blocking-shield;
 
   z-index: $z-09-error;
+  background-color: $colour-turquoise-200;
 
   // Errors may be displayed on old browsers without flexbox.
   // This forces vertical centering
@@ -69,13 +71,13 @@ body.phone #loading {
     white-space: nowrap;
   }
 
-  button,
-  a.button-like {
-    margin-top: 1em;
-  }
-
   button + button {
     margin-left: 1em;
+  }
+
+  .error-text {
+    margin-top: 4em;
+    margin-bottom: 4em;
   }
 
   .error-help-link {
@@ -101,9 +103,7 @@ body.phone #loading {
   transition: opacity 120ms;
   opacity: 1;
   will-change: opacity;
-
-  // Slightly lighter than sky colour, and closer to the blue of new colour scheme
-  background-color: rgb(178, 211, 226);
+  background-color: $colour-emerald-200;
 
   &.hidden {
     opacity: 0;
@@ -135,24 +135,31 @@ body.phone #loading {
   background-position: center center;
 }
 
+.error-content .streetmix-logo {
+  height: 60px;
+  margin: 0 auto;
+}
+
 #loading .loading-spinner {
   top: -30px; // Height of spinner element; positions it closer to center
 
   &::before {
-    border-left-color: rgba(255, 255, 255, 0.75);
-    border-right-color: rgba(255, 255, 255, 0.75);
-    border-bottom-color: rgba(255, 255, 255, 0.75);
+    border-left-color: rgb(255 255 255 / 75%);
+    border-right-color: rgb(255 255 255 / 75%);
+    border-bottom-color: rgb(255 255 255 / 75%);
   }
 }
 
 #loading noscript {
   width: 100%;
   height: 60px;
+
   // Position over the loading spinner
   margin-top: -80px;
   background-color: $sky-colour;
   text-align: center;
   z-index: 1;
+
   // Center display if flexbox is supported
   display: flex;
   justify-content: center;

@@ -1,5 +1,5 @@
-@import "../../styles/variables.scss";
-@import "../../styles/mixins.scss";
+@import "../../styles/variables";
+@import "../../styles/mixins";
 
 .blocking-shield {
   @include blocking-shield;
@@ -34,5 +34,8 @@
 
   .message {
     @include large-message-text;
+
+    margin-top: 2em;
+    margin-bottom: 2em;
   }
 }

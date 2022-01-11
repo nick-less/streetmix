@@ -1,14 +1,5 @@
 process.title = 'streetmix'
 const path = require('path')
-const dotenv = require('dotenv').config({
-  debug: process.env.DEBUG
-})
-
-// Error parsing .env file
-// It's okay to skip if we can't find it
-if (dotenv.error && dotenv.error.code !== 'ENOENT') {
-  throw dotenv.error
-}
 
 // Run this before other modules
 if (process.env.NEW_RELIC_LICENSE_KEY) {
@@ -41,7 +32,7 @@ const compileSVGSprites = require('./lib/svg-sprite')
 const appURL = require('./lib/url')
 const apiRoutes = require('./app/api_routes')
 const serviceRoutes = require('./app/service_routes')
-const logger = require('./lib/logger.js')()
+const logger = require('./lib/logger.js')
 const jwtCheck = require('./app/authentication')
 
 initCloudinary()
@@ -86,6 +77,7 @@ app.locals.env = {
 const helmetConfig = {
   frameguard: false, // Allow Streetmix to be iframed in 3rd party sites
   contentSecurityPolicy: false, // These are set explicitly later
+  crossOriginEmbedderPolicy: false, // Load external assets
   hsts: {
     maxAge: 5184000, // 60 days
     includeSubDomains: false // we don't have a wildcard ssl cert
@@ -178,6 +170,7 @@ app.use(requestHandlers.request_log)
 app.use(requestHandlers.request_id_echo)
 
 app.use(passport.initialize())
+app.use(passport.session())
 
 // Set variables for use in view templates
 app.use((req, res, next) => {
@@ -229,11 +222,16 @@ app.get('/terms-of-service', (req, res) =>
 app.use('', apiRoutes)
 app.use('', serviceRoutes)
 
-app.use(
-  '/assets',
-  express.static(path.join(__dirname, '/build'), { fallthrough: false })
-)
+app.use('/assets', express.static(path.join(__dirname, '/build')))
 app.use(express.static(path.join(__dirname, '/public')))
+
+// Catch-all for broken asset paths.
+app.all('/images/*', (req, res) => {
+  res.status(404).render('404')
+})
+app.all('/assets/*', (req, res) => {
+  res.status(404).render('404')
+})
 
 // Allow hot-module reloading (HMR)
 // and attach API docs
