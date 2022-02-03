@@ -1,6 +1,7 @@
 import { debug } from '../preinit/debug_settings'
 import { initSystemCapabilities } from '../preinit/system_capabilities'
 import { initializeFlagSubscribers } from '../app/flag_utils'
+import { initCoil } from '../integrations/coil'
 import { segmentsChanged } from '../segments/view'
 import { initLocale } from '../locales/locale'
 import { setLastStreet, setIgnoreStreetChanges } from '../streets/data_model'
@@ -73,6 +74,8 @@ export async function initialize () {
   if (store.getState().errors.abortEverything) {
     return
   }
+
+  initCoil()
 
   // Asynchronously loading…
 

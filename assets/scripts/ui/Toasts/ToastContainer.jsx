@@ -6,6 +6,8 @@ import Toast from './Toast'
 import ToastUndo from './ToastUndo'
 import ToastSignIn from './ToastSignIn'
 import ToastNoConnection from './ToastNoConnection'
+import ToastWebMonetization from './ToastWebMonetization'
+import ToastWebMonetizationSuccess from './ToastWebMonetizationSuccess'
 import './ToastContainer.scss'
 
 const TOAST_SPRING_CONFIG = {
@@ -119,7 +121,10 @@ function ToastContainer (props) {
         } = message
         const setRef = (ref) => ref && refMap.set(item, ref)
         const handleClose = (event) => {
-          event.stopPropagation()
+          // Not all instances of this function is called by an event handler
+          if (event) {
+            event.stopPropagation()
+          }
           cancelMap.has(item) && cancelMap.get(item)()
         }
 
@@ -141,6 +146,19 @@ function ToastContainer (props) {
                 setRef={setRef}
                 handleClose={handleClose}
                 {...message}
+              />
+            )
+            break
+          case 'TOAST_WEB_MONETIZATION':
+            childComponent = (
+              <ToastWebMonetization setRef={setRef} handleClose={handleClose} />
+            )
+            break
+          case 'TOAST_WEB_MONETIZATION_SUCCESS':
+            childComponent = (
+              <ToastWebMonetizationSuccess
+                setRef={setRef}
+                handleClose={handleClose}
               />
             )
             break

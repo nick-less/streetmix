@@ -24,7 +24,7 @@ exports[`BlockingError renders ACCESS_DENIED 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
       <p
         class="error-help-link"
@@ -68,6 +68,12 @@ exports[`BlockingError renders AUTH_EXPIRED 1`] = `
       >
         Sign in
       </button>
+       
+      <button
+        class="button-primary"
+      >
+        Return to Streetmix
+      </button>
     </div>
   </div>
 </DocumentFragment>
@@ -91,21 +97,13 @@ exports[`BlockingError renders AUTH_PROBLEM_API_PROBLEM 1`] = `
           There was a problem with signing you in.
         </h1>
         <p>
-          There was a problem with authentication. Please try again later or let us know via 
+          There was a problem with authentication. Please try again later. If you still need help, please 
           <a
-            href="mailto:hello@streetmix.net"
+            href="https://docs.streetmix.net/community"
             rel="noopener noreferrer"
             target="_blank"
           >
-            email
-          </a>
-           or 
-          <a
-            href="https://twitter.com/intent/tweet?text=@streetmix"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Twitter
+            contact us
           </a>
           .
         </p>
@@ -113,7 +111,7 @@ exports[`BlockingError renders AUTH_PROBLEM_API_PROBLEM 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
       <p
         class="error-help-link"
@@ -149,21 +147,13 @@ exports[`BlockingError renders AUTH_PROBLEM_NO_ACCESS_TOKEN 1`] = `
           There was a problem with signing you in.
         </h1>
         <p>
-          There was a problem with authentication. Please try again later or let us know via 
+          There was a problem with authentication. Please try again later. If you still need help, please 
           <a
-            href="mailto:hello@streetmix.net"
+            href="https://docs.streetmix.net/community"
             rel="noopener noreferrer"
             target="_blank"
           >
-            email
-          </a>
-           or 
-          <a
-            href="https://twitter.com/intent/tweet?text=@streetmix"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Twitter
+            contact us
           </a>
           .
         </p>
@@ -171,7 +161,7 @@ exports[`BlockingError renders AUTH_PROBLEM_NO_ACCESS_TOKEN 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
       <p
         class="error-help-link"
@@ -207,21 +197,13 @@ exports[`BlockingError renders AUTH_PROBLEM_NO_TWITTER_ACCESS_TOKEN 1`] = `
           There was a problem with signing you in.
         </h1>
         <p>
-          There was a problem with authentication. Please try again later or let us know via 
+          There was a problem with authentication. Please try again later. If you still need help, please 
           <a
-            href="mailto:hello@streetmix.net"
+            href="https://docs.streetmix.net/community"
             rel="noopener noreferrer"
             target="_blank"
           >
-            email
-          </a>
-           or 
-          <a
-            href="https://twitter.com/intent/tweet?text=@streetmix"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Twitter
+            contact us
           </a>
           .
         </p>
@@ -229,7 +211,7 @@ exports[`BlockingError renders AUTH_PROBLEM_NO_TWITTER_ACCESS_TOKEN 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
       <p
         class="error-help-link"
@@ -265,21 +247,13 @@ exports[`BlockingError renders AUTH_PROBLEM_NO_TWITTER_REQUEST_TOKEN 1`] = `
           There was a problem with signing you in.
         </h1>
         <p>
-          There was a problem with authentication. Please try again later or let us know via 
+          There was a problem with authentication. Please try again later. If you still need help, please 
           <a
-            href="mailto:hello@streetmix.net"
+            href="https://docs.streetmix.net/community"
             rel="noopener noreferrer"
             target="_blank"
           >
-            email
-          </a>
-           or 
-          <a
-            href="https://twitter.com/intent/tweet?text=@streetmix"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Twitter
+            contact us
           </a>
           .
         </p>
@@ -287,7 +261,7 @@ exports[`BlockingError renders AUTH_PROBLEM_NO_TWITTER_REQUEST_TOKEN 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
       <p
         class="error-help-link"
@@ -354,7 +328,7 @@ exports[`BlockingError renders FORCE_RELOAD_SIGN_IN 1`] = `
           You signed in in another window.
         </h1>
         <p>
-          Please reload this page before continuing.
+          Please reload this page to return to Streetmix.
         </p>
       </div>
       <button
@@ -385,7 +359,7 @@ exports[`BlockingError renders FORCE_RELOAD_SIGN_OUT 1`] = `
           You signed out in another window.
         </h1>
         <p>
-          Please reload this page before continuing.
+          Please reload this page to return to Streetmix.
         </p>
       </div>
       <button
@@ -416,7 +390,7 @@ exports[`BlockingError renders FORCE_RELOAD_SIGN_OUT_401 1`] = `
           You signed out in another window.
         </h1>
         <p>
-          Please reload this page before continuing.
+          Please reload this page to return to Streetmix.
           <br />
           (Error RM2.)
         </p>
@@ -475,21 +449,13 @@ exports[`BlockingError renders GENERIC_ERROR 1`] = `
           Something went wrong.
         </h1>
         <p>
-          We’re sorry – something went wrong. Please try again later or let us know via 
+          We’re sorry – something went wrong. Please try again later. If you still need help, please 
           <a
-            href="mailto:hello@streetmix.net"
+            href="https://docs.streetmix.net/community"
             rel="noopener noreferrer"
             target="_blank"
           >
-            email
-          </a>
-           or 
-          <a
-            href="https://twitter.com/intent/tweet?text=@streetmix"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Twitter
+            contact us
           </a>
           .
         </p>
@@ -497,7 +463,7 @@ exports[`BlockingError renders GENERIC_ERROR 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
     </div>
   </div>
@@ -590,7 +556,7 @@ exports[`BlockingError renders NOT_FOUND 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
     </div>
   </div>
@@ -706,7 +672,7 @@ exports[`BlockingError renders SIGN_OUT 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
     </div>
   </div>
@@ -737,7 +703,7 @@ exports[`BlockingError renders STREET_404 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
     </div>
   </div>
@@ -780,7 +746,7 @@ exports[`BlockingError renders STREET_404_BUT_LINK_TO_USER 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
     </div>
   </div>
@@ -823,7 +789,7 @@ exports[`BlockingError renders STREET_410_BUT_LINK_TO_USER 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
     </div>
   </div>
@@ -898,7 +864,7 @@ exports[`BlockingError renders STREET_DELETED_ELSEWHERE 1`] = `
       <button
         class="button-primary"
       >
-        Go to the homepage
+        Return to Streetmix
       </button>
     </div>
   </div>
@@ -960,13 +926,13 @@ exports[`BlockingError renders UNSUPPORTED_BROWSER 1`] = `
           </a>
         </p>
         <p>
-          If you think your browser should be supported, please contact us via 
+          If you think your browser should be supported, please 
           <a
-            href="mailto:hello@streetmix.net"
+            href="https://docs.streetmix.net/community"
             rel="noopener noreferrer"
             target="_blank"
           >
-            email
+            contact us
           </a>
           .
         </p>

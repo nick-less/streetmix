@@ -1,3 +1,4 @@
+const querystring = require('querystring')
 const btoa = require('btoa')
 const passport = require('passport')
 const OAuth2Strategy = require('passport-oauth').OAuth2Strategy
@@ -7,7 +8,12 @@ const { User } = require('../../../db/models')
 const appURL = require('../../../../lib/url.js')
 const logger = require('../../../../lib/logger.js')
 
-const { findUser, addUserConnection, syncAccountStatus } = require('./helpers')
+const {
+  findUser,
+  addUserConnection,
+  syncAccountStatus,
+  addOrUpdateByProviderName
+} = require('./helpers')
 
 const initCoil = () => {
   const authToken = btoa(
@@ -15,6 +21,7 @@ const initCoil = () => {
       ':' +
       encodeURIComponent(process.env.COIL_CLIENT_SECRET)
   )
+
   const coilStrategy = new OAuth2Strategy(
     {
       authorizationURL: 'https://coil.com/oauth/auth',
@@ -115,6 +122,81 @@ exports.callback = (req, res, next) => {
   })(req, res, next)
 }
 
+// Check for coil provider to set access token to stream payments
+exports.BTPTokenCheck = async (req, res, next) => {
+  if (!req.user || !req.user.sub) {
+    return next()
+  }
+  const userData = await User.findOne({ where: { auth0_id: req.user.sub } })
+
+  // Move on if no identities
+  if (!userData.identities) {
+    return next()
+  }
+
+  // Find Coil as identity provider. Move on if coil not found
+  const coilData = userData.identities.find((item) => item.provider === 'coil')
+  if (!coilData) {
+    return next()
+  }
+
+  // fetch and return btpToken
+  let btpToken = await getBTPToken(coilData.access_token)
+  if (typeof btpToken === 'undefined') {
+    // token may be expired, so lets refresh and try
+    const newAccessToken = await refreshAccessToken(coilData.refresh_token)
+
+    const identities = userData.identities
+    coilData.access_token = newAccessToken
+    addOrUpdateByProviderName(identities, coilData)
+    await User.update(
+      {
+        identities: identities
+      },
+      { where: { auth0Id: userData.auth0Id }, returning: true }
+    )
+    // return btp token after updating access token
+    btpToken = await getBTPToken(newAccessToken)
+  }
+
+  // express-sesion seems to indicate this line is all that would be needed to add to cookies
+  req.session.btpToken = btpToken
+  // ..but it dosen't work unless we do this:
+  res.cookie('btpToken', btpToken)
+  console.log(btpToken)
+  return next()
+}
+
+// passportjs dosen't handle refresh tokens as a strategy so we have to handle that ourselves
+const refreshAccessToken = async (refreshToken) => {
+  try {
+    const encodedAuth = btoa(
+      process.env.COIL_CLIENT_ID +
+        ':' +
+        encodeURIComponent(process.env.COIL_CLIENT_SECRET)
+    )
+    const data = querystring.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken
+    })
+    const requestConfig = {
+      method: 'post',
+      url: 'https://coil.com/oauth/token',
+      headers: {
+        Authorization: `Basic ${encodedAuth}`,
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      data: data
+    }
+    const response = await axios(requestConfig)
+    return response.data.access_token
+  } catch (error) {
+    logger.error(error)
+  }
+}
+
+exports.refreshAccessToken = refreshAccessToken
+
 const getBTPToken = async (accessToken) => {
   try {
     const requestConfig = {
@@ -133,6 +215,8 @@ const getBTPToken = async (accessToken) => {
   }
 }
 
+exports.getBTPToken = getBTPToken
+
 /**
  * connects the third party profile with the database user record
  * pass third party profile data here, construct an object to save to user DB
@@ -143,8 +227,6 @@ exports.connectUser = async (req, res, next) => {
   const account = req.account
   const profile = req.profile
 
-  // if we get the BTP Token, thats good enough to add the Role
-  // later we might need to check, refresh
   try {
     // we pass the token to the request session, so it should persist as long as the user has their browser open
     const btpToken = await getBTPToken(req.profile.access_token)
@@ -156,7 +238,6 @@ exports.connectUser = async (req, res, next) => {
     // first you redirect, the token dosen't seem present, but its in the session thereafter..
     res.redirect('/')
   } catch (error) {
-    // what would we want to do here?
     logger.error(error)
     res.redirect('/error')
   }
