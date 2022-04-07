@@ -72,7 +72,7 @@
         "type": {
           "default": {
             "graphics": {
-              "repeat": "ground--concrete-raised"
+              "repeat": "ground--concrete"
             }
           }
         }
@@ -238,6 +238,40 @@
     "markings--parking-right": {
       "graphics": {
         "left": "markings--parking-right"
+      }
+    },
+    "markings--twoway-left": {
+      "graphics": {
+        "center": [
+          {
+            "id": "markings--center-lane"
+          },
+          {
+            "id": "markings--straight-inbound-light",
+            "offsetX": "-50%"
+          },
+          {
+            "id": "markings--straight-outbound-light",
+            "offsetX": "50%"
+          }
+        ]
+      }
+    },
+    "markings--twoway-right": {
+      "graphics": {
+        "center": [
+          {
+            "id": "markings--center-lane"
+          },
+          {
+            "id": "markings--straight-inbound-light",
+            "offsetX": "50%"
+          },
+          {
+            "id": "markings--straight-outbound-light",
+            "offsetX": "-50%"
+          }
+        ]
       }
     }
   },
@@ -1280,6 +1314,26 @@
           "outbound": {
             "graphics": {
               "center": "transit--bus-outbound"
+            }
+          }
+        }
+      }
+    },
+    "bus-alt": {
+      "name": "Bus",
+      "nameKey": "bus",
+      "owner": "TRANSIT",
+      "zIndex": 15,
+      "variants": {
+        "direction": {
+          "inbound": {
+            "graphics": {
+              "center": "transit--bus-inbound-alt"
+            }
+          },
+          "outbound": {
+            "graphics": {
+              "center": "transit--bus-outbound-alt"
             }
           }
         }

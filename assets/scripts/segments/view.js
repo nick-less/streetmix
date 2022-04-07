@@ -4,6 +4,7 @@ import { saveStreetToServerIfNecessary } from '../streets/data_model'
 import { recalculateWidth } from '../streets/width'
 import store from '../store'
 import { updateSegments, changeSegmentProperties } from '../store/slices/street'
+import { percentToNumber } from '../util/number'
 import { getSegmentInfo, getSegmentVariantInfo, getSpriteDef } from './info'
 import { drawScatteredSprites } from './scatter'
 import {
@@ -294,7 +295,6 @@ function getGroundLevelOffset (elevation) {
  * @param {Number} randSeed
  * @param {Number} multiplier
  * @param {Number} dpi
- * @param {Number} drawSegmentOnly - If true, skips drawing background elements
  */
 export function drawSegmentContents (
   ctx,
@@ -305,8 +305,7 @@ export function drawSegmentContents (
   groundBaseline,
   randSeed,
   multiplier,
-  dpi,
-  drawSegmentOnly = false
+  dpi
 ) {
   const variantInfo = getSegmentVariantInfo(type, variantString)
   const graphics = variantInfo.graphics
@@ -323,14 +322,11 @@ export function drawSegmentContents (
     groundBaseline -
     multiplier * (groundLevelOffset / TILESET_POINT_PER_PIXEL || 0)
 
-  if (graphics.repeat && !drawSegmentOnly) {
+  if (graphics.repeat) {
     // Convert single string or object values to single-item array
     let sprites = Array.isArray(graphics.repeat)
       ? graphics.repeat
       : [graphics.repeat]
-    if (drawSegmentOnly) {
-      sprites = [sprites[sprites.length - 1]]
-    }
     // Convert array of strings into array of objects
     // If already an object, pass through
     sprites = sprites.map((def) =>
@@ -361,7 +357,7 @@ export function drawSegmentContents (
         drawWidth = segmentWidth - padding * 2 * TILE_SIZE
       }
 
-      const count = Math.floor(drawWidth / width) + 1
+      const countX = Math.floor(drawWidth / width) + 1
 
       let repeatStartX
       if (left < 0) {
@@ -393,43 +389,51 @@ export function drawSegmentContents (
         TILE_SIZE *
         ((svg.height - (sprite.originY || 0)) / TILE_SIZE_ACTUAL)
 
-      for (let i = 0; i < count; i++) {
+      // Right now only ground items repeat in the Y direction
+      const height = (svg.height / TILE_SIZE_ACTUAL) * TILE_SIZE
+      // countY should always be at minimum 1.
+      const countY = sprite.id.startsWith('ground--')
+        ? Math.ceil((ctx.canvas.height / dpi - groundLevel) / height)
+        : 1
+
+      for (let i = 0; i < countX; i++) {
         // remainder
-        if (i === count - 1) {
-          width = drawWidth - (count - 1) * width
+        if (i === countX - 1) {
+          width = drawWidth - (countX - 1) * width
         }
 
-        // If the sprite being rendered is the ground, dy is equal to the
-        // groundLevel. If not, dy is equal to the groundLevel minus the
-        // distance the sprite will be from the ground.
-        drawSegmentImage(
-          sprite.id,
-          ctx,
-          undefined,
-          undefined,
-          width,
-          undefined,
-          offsetLeft +
-            padding * TILE_SIZE * multiplier +
-            (repeatStartX + i * (svg.width / TILE_SIZE_ACTUAL) * TILE_SIZE) *
-              multiplier,
-          sprite.id.includes('ground')
-            ? groundLevel
-            : groundLevel - distanceFromGround,
-          width,
-          undefined,
-          multiplier,
-          dpi
-        )
+        for (let j = 0; j < countY; j++) {
+          // If the sprite being rendered is the ground, dy is equal to the
+          // groundLevel. If not, dy is equal to the groundLevel minus the
+          // distance the sprite will be from the ground.
+          drawSegmentImage(
+            sprite.id,
+            ctx,
+            undefined,
+            undefined,
+            width,
+            undefined,
+            offsetLeft +
+              padding * TILE_SIZE * multiplier +
+              (repeatStartX + i * (svg.width / TILE_SIZE_ACTUAL) * TILE_SIZE) *
+                multiplier,
+            sprite.id.startsWith('ground--')
+              ? groundLevel + height * j
+              : groundLevel - distanceFromGround,
+            width,
+            undefined,
+            multiplier,
+            dpi
+          )
+        }
       }
     }
   }
 
   if (graphics.left) {
-    let sprites = Array.isArray(graphics.left) ? graphics.left : [graphics.left]
-    if (drawSegmentOnly) {
-      sprites = [sprites[sprites.length - 1]]
-    }
+    const sprites = Array.isArray(graphics.left)
+      ? graphics.left
+      : [graphics.left]
     for (let l = 0; l < sprites.length; l++) {
       const sprite = getSpriteDef(sprites[l])
       const svg = images.get(sprite.id)
@@ -477,12 +481,9 @@ export function drawSegmentContents (
   }
 
   if (graphics.right) {
-    let sprites = Array.isArray(graphics.right)
+    const sprites = Array.isArray(graphics.right)
       ? graphics.right
       : [graphics.right]
-    if (drawSegmentOnly) {
-      sprites = [sprites[sprites.length - 1]]
-    }
     for (let l = 0; l < sprites.length; l++) {
       const sprite = getSpriteDef(sprites[l])
       const svg = images.get(sprite.id)
@@ -535,12 +536,9 @@ export function drawSegmentContents (
   }
 
   if (graphics.center) {
-    let sprites = Array.isArray(graphics.center)
+    const sprites = Array.isArray(graphics.center)
       ? graphics.center
       : [graphics.center]
-    if (drawSegmentOnly) {
-      sprites = [sprites[sprites.length - 1]]
-    }
     for (let l = 0; l < sprites.length; l++) {
       const sprite = getSpriteDef(sprites[l])
       const svg = images.get(sprite.id)
@@ -549,11 +547,17 @@ export function drawSegmentContents (
       if (!svg) continue
 
       const center = dimensions.center
+      const offsetByPercentage =
+        sprite.offsetX &&
+        typeof sprite.offsetX === 'string' &&
+        sprite.offsetX.endsWith('%')
+      const offsetX = offsetByPercentage ? 0 : sprite.offsetX
       const x =
         (center -
           svg.width / TILE_SIZE_ACTUAL / 2 -
           left -
-          (sprite.offsetX / TILE_SIZE_ACTUAL || 0)) *
+          (offsetByPercentage ? percentToNumber(sprite.offsetX) * center : 0) -
+          (offsetX / TILE_SIZE_ACTUAL || 0)) *
         TILE_SIZE *
         multiplier
       const distanceFromGround =
