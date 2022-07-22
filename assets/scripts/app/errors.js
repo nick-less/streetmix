@@ -1,6 +1,5 @@
 import store from '../store'
 import { showError as showErrorAction } from '../store/slices/errors'
-import { hideLoadingScreen } from './load_resources'
 import {
   URL_ERROR_NO_TWITTER_REQUEST_TOKEN,
   URL_ERROR_NO_TWITTER_ACCESS_TOKEN,
@@ -23,7 +22,7 @@ export const ERRORS = {
   AUTH_PROBLEM_NO_TWITTER_ACCESS_TOKEN: 11,
   AUTH_PROBLEM_API_PROBLEM: 12,
   GENERIC_ERROR: 13,
-  UNSUPPORTED_BROWSER: 14,
+  UNSUPPORTED_BROWSER: 14, // Deprecated. Do not use
   STREET_404: 15,
   STREET_404_BUT_LINK_TO_USER: 16,
   STREET_410_BUT_LINK_TO_USER: 17,
@@ -40,7 +39,6 @@ export function showError (errorType, newAbortEverything) {
   // NOTE:
   // This function might be called on very old browsers. Please make
   // sure not to use modern faculties.
-  hideLoadingScreen()
   store.dispatch(showErrorAction(errorType, newAbortEverything))
 }
 

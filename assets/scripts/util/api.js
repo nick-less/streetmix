@@ -8,6 +8,18 @@ class APIClient {
     })
   }
 
+  getFlags = async () => {
+    return this.client.get('/flags')
+  }
+
+  getAppTranslations = async (locale) => {
+    return this.client.get(`translate/${locale}/main`)
+  }
+
+  getSegmentTranslations = async (locale) => {
+    return this.client.get(`translate/${locale}/segment-info`)
+  }
+
   getStreet = async (streetId) => {
     const { data } = await this.client.get(`/streets/${streetId}`)
     return data
@@ -41,7 +53,10 @@ class APIClient {
 const client = new APIClient()
 
 export const {
+  getFlags,
   getStreet,
+  getAppTranslations,
+  getSegmentTranslations,
   deleteStreetImage,
   getGalleryForUser,
   getGalleryForAllStreets,

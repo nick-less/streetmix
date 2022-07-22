@@ -18,15 +18,15 @@ import { detectGeolocation } from '../users/geolocation'
 import { initSettingsStoreObserver } from '../users/settings'
 import store, { observeStore } from '../store'
 import { openGallery } from '../store/actions/gallery'
-import { showDialog } from '../store/slices/dialogs'
 import { everythingLoaded } from '../store/slices/app'
+import { showDialog } from '../store/slices/dialogs'
 import { addEventListeners } from './event_listeners'
-import { getMode, setMode, MODES, processMode } from './mode'
+import { getMode, MODES, processMode } from './mode'
 import { processUrl } from './page_url'
 import { startListening } from './keypress'
 import { registerKeypresses } from './keyboard_commands'
 import { scheduleNextLiveUpdateCheck } from './live_update'
-import { hideLoadingScreen, loadImages } from './load_resources'
+import { loadImages } from './load_resources'
 
 let serverContacted
 
@@ -54,18 +54,6 @@ function preInit () {
 
 export async function initialize () {
   preInit()
-  if (!debug.forceUnsupportedBrowser) {
-    // TODO temporary ban
-    if (
-      navigator.userAgent.indexOf('Opera') !== -1 ||
-      navigator.userAgent.indexOf('Internet Explorer') !== -1 ||
-      navigator.userAgent.indexOf('MSIE') !== -1
-    ) {
-      setMode(MODES.UNSUPPORTED_BROWSER)
-      processMode()
-      return
-    }
-  }
 
   window.dispatchEvent(new window.CustomEvent('stmx:init'))
 
@@ -138,8 +126,6 @@ function onEverythingLoaded () {
   if (debug.forceLiveUpdate) {
     scheduleNextLiveUpdateCheck()
   }
-
-  window.setTimeout(hideLoadingScreen, 0)
 
   const mode = getMode()
   if (mode === MODES.USER_GALLERY) {
