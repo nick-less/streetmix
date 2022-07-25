@@ -1,4 +1,5 @@
 import store from '../store'
+import { everythingLoaded } from '../store/slices/app'
 import { showError as showErrorAction } from '../store/slices/errors'
 import {
   URL_ERROR_NO_TWITTER_REQUEST_TOKEN,
@@ -16,7 +17,6 @@ export const ERRORS = {
   FORCE_RELOAD_SIGN_OUT: 5,
   STREET_DELETED_ELSEWHERE: 6,
   NEW_STREET_SERVER_FAILURE: 7,
-  FORCE_RELOAD_SIGN_OUT_401: 8,
   ACCESS_DENIED: 9,
   AUTH_PROBLEM_NO_TWITTER_REQUEST_TOKEN: 10,
   AUTH_PROBLEM_NO_TWITTER_ACCESS_TOKEN: 11,
@@ -36,9 +36,9 @@ export const ERRORS = {
 }
 
 export function showError (errorType, newAbortEverything) {
-  // NOTE:
-  // This function might be called on very old browsers. Please make
-  // sure not to use modern faculties.
+  // Dispatch everythingLoaded to hide the loading window
+  // for cases where error appears immediately on load
+  store.dispatch(everythingLoaded())
   store.dispatch(showErrorAction(errorType, newAbortEverything))
 }
 

@@ -12,13 +12,16 @@ import { app } from '../preinit/app_settings'
 import { segmentsChanged } from '../segments/view'
 import { getSignInData, isSignedIn } from '../users/authentication'
 import {
+  deleteStreet,
+  getStreet,
+  getStreetWithParams,
+  postStreet,
+  putStreet
+} from '../util/api'
+import {
   isblockingAjaxRequestInProgress,
   newBlockingAjaxRequest
 } from '../util/fetch_blocking'
-import {
-  newNonblockingAjaxRequest,
-  getNonblockingAjaxRequestCount
-} from '../util/fetch_nonblocking'
 import store from '../store'
 import { updateSettings } from '../store/slices/settings'
 import {
@@ -64,16 +67,9 @@ export function setSaveStreetIncomplete (value) {
   saveStreetIncomplete = value
 }
 
-let uniqueRequestId = 0
-
 let latestRequestId
 
-function getUniqueRequestHeader () {
-  uniqueRequestId++
-  return uniqueRequestId
-}
-
-export function createNewStreetOnServer () {
+export async function createNewStreetOnServer () {
   const settings = store.getState().settings
 
   if (settings.newStreetPreference === NEW_STREET_EMPTY) {
@@ -82,75 +78,40 @@ export function createNewStreetOnServer () {
     prepareDefaultStreet()
   }
 
-  const options = {
-    method: 'POST',
-    body: packServerStreetData(),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }
+  const transmission = packServerStreetDataRaw()
 
-  // TODO const url
-  window
-    .fetch('/api/v1/streets', options)
-    .then((response) => {
-      if (!response.ok) {
-        throw response
-      }
-      return response.json()
-    })
-    .then(receiveNewStreet)
-    .catch(errorReceiveNewStreet)
+  postStreet(transmission).then(receiveNewStreet).catch(errorReceiveNewStreet)
 }
 
-function receiveNewStreet (data) {
+function receiveNewStreet ({ data }) {
   setStreetId(data.id, data.namespacedId)
-
   saveStreetToServer(true)
 }
 
-function errorReceiveNewStreet (data) {
-  if (data.status === 401) {
+function errorReceiveNewStreet ({ response }) {
+  if (response.status === 401) {
     showError(ERRORS.AUTH_EXPIRED, true)
   } else {
     showError(ERRORS.NEW_STREET_SERVER_FAILURE, true)
   }
 }
 
-export function getFetchStreetUrl () {
-  // TODO const
-  let url
+export async function fetchStreetFromServer () {
   const street = store.getState().street
-  if (street.creatorId) {
-    url =
-      '/api/v1/streets?namespacedId=' +
-      encodeURIComponent(street.namespacedId) +
-      '&creatorId=' +
-      encodeURIComponent(street.creatorId)
-  } else {
-    url =
-      '/api/v1/streets?namespacedId=' + encodeURIComponent(street.namespacedId)
+
+  try {
+    const response = await getStreetWithParams(
+      street.creatorId,
+      street.namespacedId
+    )
+    receiveStreet(response.data)
+  } catch (error) {
+    errorReceiveStreet(error)
   }
-
-  return url
 }
 
-export function fetchStreetFromServer () {
-  const url = getFetchStreetUrl()
-
-  window
-    .fetch(url)
-    .then(function (response) {
-      if (!response.ok) {
-        throw response
-      }
-      return response.json()
-    })
-    .then(receiveStreet)
-    .catch(errorReceiveStreet)
-}
-
-function errorReceiveStreet (data) {
+function errorReceiveStreet (error) {
+  const data = error.response.data
   const mode = getMode()
   if (
     mode === MODES.CONTINUE ||
@@ -182,29 +143,19 @@ export function saveStreetToServer (initial) {
     return
   }
 
-  const transmission = packServerStreetData()
+  const transmission = packServerStreetDataRaw()
   const street = store.getState().street
-  const url = '/api/v1/streets/' + street.id
-  const options = {
-    method: 'PUT',
-    body: transmission,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }
 
-  if (initial) {
-    // blocking
-    window.fetch(url, options).then(confirmSaveStreetToServerInitial)
-  } else {
-    newNonblockingAjaxRequest(url, options, false)
-  }
+  putStreet(street.id, transmission).then(() => {
+    setSaveStreetIncomplete(false)
+
+    if (initial) {
+      confirmSaveStreetToServerInitial()
+    }
+  })
 }
 
 function confirmSaveStreetToServerInitial () {
-  setSaveStreetIncomplete(false)
-
   setServerContacted(true)
   checkIfEverythingIsLoaded()
 }
@@ -213,10 +164,12 @@ function clearScheduledSavingStreetToServer () {
   window.clearTimeout(saveStreetTimerId)
 }
 
-export function fetchStreetForVerification () {
+export async function fetchStreetForVerification () {
   // Don’t do it with any network services pending
+  // NOTE: this used to check for all nonblocking requests,
+  // but this system is getting refactored away -- so we're
+  // not really checking against all pending requests anymore.
   if (
-    getNonblockingAjaxRequestCount() ||
     isblockingAjaxRequestInProgress() ||
     saveStreetIncomplete ||
     store.getState().errors.abortEverything ||
@@ -225,41 +178,31 @@ export function fetchStreetForVerification () {
     return
   }
 
-  const url = getFetchStreetUrl()
+  latestRequestId = Date.now()
+  const streetId = store.getState().street.id
 
-  latestRequestId = getUniqueRequestHeader()
+  try {
+    const response = await getStreet(streetId, {
+      headers: { 'x-streetmix-request-id': latestRequestId }
+    })
 
-  const options = {
-    headers: { 'X-Streetmix-Request-Id': latestRequestId }
+    // Response headers are lower-case via Axios
+    const requestId = response.headers['x-streetmix-request-id']
+    // Throw an error if response is stale
+    if (latestRequestId !== Number.parseInt(requestId, 10)) {
+      throw new Error('1')
+    }
+
+    // Handle response data
+    receiveStreetForVerification(response.data)
+  } catch (error) {
+    // Silently throw away stale responses
+    if (error.message === '1') return
+
+    // Otherwise, handle the error
+    console.log(error)
+    errorReceiveStreetForVerification(error.response)
   }
-
-  window
-    .fetch(url, options)
-    .then((response) => {
-      if (!response.ok) {
-        throw response
-      }
-
-      const requestId = Number.parseInt(
-        response.headers.get('X-Streetmix-Request-Id'),
-        10
-      )
-
-      if (requestId !== latestRequestId) {
-        throw new Error('1')
-      } else {
-        return response.json()
-      }
-    })
-    .then((transmission) => {
-      receiveStreetForVerification(transmission)
-    })
-    .catch((error) => {
-      // Early exit if requestId does not equal the latestRequestId
-      if (error.message !== '1') return
-
-      errorReceiveStreetForVerification(error)
-    })
 }
 
 /**
@@ -388,7 +331,7 @@ export function unpackServerStreetData (
   }
 }
 
-export function packServerStreetData () {
+export function packServerStreetDataRaw () {
   const data = {}
   data.street = trimStreetData(store.getState().street)
 
@@ -414,6 +357,13 @@ export function packServerStreetData () {
     clientUpdatedAt: street.clientUpdatedAt
   }
 
+  return transmission
+}
+
+// Legacy: converts raw JS objects to JSON.
+// axios-based requests do this automatically.
+export function packServerStreetData () {
+  const transmission = packServerStreetDataRaw()
   return JSON.stringify(transmission)
 }
 
@@ -498,7 +448,10 @@ function receiveLastStreet (transmission) {
 }
 
 export function sendDeleteStreetToServer (id) {
-  // Delete street thumbnail.
+  deleteStreet(id)
+
+  // Delete street thumbnail from Cloudinary.
+  // TODO: handle this from the backend!
   deleteStreetThumbnail(id)
 
   // Prevents new street submenu from showing the last street
@@ -513,13 +466,4 @@ export function sendDeleteStreetToServer (id) {
       })
     )
   }
-
-  // TODO const url
-  newNonblockingAjaxRequest(
-    '/api/v1/streets/' + id,
-    {
-      method: 'DELETE'
-    },
-    false
-  )
 }

@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { FormattedMessage } from 'react-intl'
 import ReactMarkdown from 'react-markdown'
 import LoadingSpinner from '../ui/LoadingSpinner'
+import { getChangelog } from '../util/api'
 import Dialog from './Dialog'
 import './WhatsNewDialog.scss'
 
@@ -26,20 +27,13 @@ const WhatsNewDialog = () => {
 
   async function getContent () {
     try {
-      const res = await window.fetch('/services/changelog')
-
-      if (res.status === 200) {
-        setContent(await res.text())
-        setSubmitState('OK')
-      } else {
-        // Errors are generic for now.
-        setSubmitState('ERROR')
-      }
-    } catch (err) {
-      // The error handling in the try block handles failures on the remote
-      // server (e.g. 404, 500, etc). The error handling in the catch block
-      // handles failures if the fetch fails on the client side (e.g. user is
-      // offline). Both situations will display the same generic error for now.
+      const response = await getChangelog()
+      setContent(response.data)
+      setSubmitState('OK')
+    } catch (error) {
+      // The error handling here handles both server errors (e.g. 404, 500, etc)
+      // as well as client side errors (e.g. user is offline). Both situations
+      // will display the same generic error for now.
       setSubmitState('ERROR')
     }
   }

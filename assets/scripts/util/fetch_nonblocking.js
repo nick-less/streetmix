@@ -1,7 +1,4 @@
-import {
-  getSaveStreetIncomplete,
-  setSaveStreetIncomplete
-} from '../streets/xhr'
+import { getSaveStreetIncomplete } from '../streets/xhr'
 import {
   isThumbnailSaved,
   SAVE_THUMBNAIL_EVENTS,
@@ -10,26 +7,18 @@ import {
 import store from '../store'
 import { addToast } from '../store/slices/toasts'
 
-const NON_BLOCKING_AJAX_REQUEST_TIME = [10, 500, 1000, 5000, 10000]
-const NON_BLOCKING_AJAX_REQUEST_BACKOFF_RANGE = 60000
+// Note: this has historically been an AJAX request handler library.
+// Code has been removed in favor of axios. Remaining functions
+// handle various edge cases in connectivity. TODO: refactor
 
-const nonblockingAjaxRequests = []
-let nonblockingAjaxRequestTimer = 0
+export function onNoConnection (event) {
+  const state = store.getState()
 
-// Amount of time to retry connection before showing a no-connection toast
-const NO_CONNECTION_MESSAGE_TIMEOUT = 10000
-let noConnectionMessageTimer = -1
-
-function scheduleNoConnectionMessage () {
-  if (noConnectionMessageTimer === -1) {
-    noConnectionMessageTimer = window.setTimeout(
-      showNoConnectionMessage,
-      NO_CONNECTION_MESSAGE_TIMEOUT
-    )
+  // Don't display this in offline mode
+  if (state.system.offline) {
+    return
   }
-}
 
-function showNoConnectionMessage () {
   store.dispatch(
     addToast({
       component: 'TOAST_NO_CONNECTION',
@@ -39,163 +28,7 @@ function showNoConnectionMessage () {
   )
 }
 
-function hideNoConnectionMessage () {
-  window.dispatchEvent(new window.CustomEvent('stmx:connection_reattempt'))
-
-  // Cleanup
-  window.clearTimeout(noConnectionMessageTimer)
-  noConnectionMessageTimer = -1
-}
-
-export function newNonblockingAjaxRequest (
-  url,
-  options,
-  allowToClosePage,
-  doneFunc,
-  errorFunc,
-  maxRetries
-) {
-  nonblockingAjaxRequestTimer = 0
-
-  const signature = getAjaxRequestSignature(url, options)
-
-  removeNonblockingAjaxRequest(signature)
-  nonblockingAjaxRequests.push({
-    url,
-    options,
-    allowToClosePage,
-    doneFunc,
-    errorFunc,
-    inProgress: false,
-    signature,
-    tryCount: 0,
-    maxRetries
-  })
-
-  scheduleNextNonblockingAjaxRequest()
-}
-
-export function getNonblockingAjaxRequestCount () {
-  return nonblockingAjaxRequests.length
-}
-
-function getAjaxRequestSignature (url, request) {
-  return request.method + ' ' + url
-}
-
-export function nonblockingAjaxTryAgain () {
-  hideNoConnectionMessage()
-
-  nonblockingAjaxRequestTimer = 0
-
-  scheduleNextNonblockingAjaxRequest()
-}
-
-function sendNextNonblockingAjaxRequest () {
-  if (store.getState().errors.abortEverything) {
-    return
-  }
-
-  if (getNonblockingAjaxRequestCount()) {
-    scheduleNoConnectionMessage()
-
-    let request = null
-
-    request = nonblockingAjaxRequests[0]
-
-    if (request) {
-      if (!request.inProgress) {
-        request.inProgress = true
-
-        window
-          .fetch(request.url, request.options)
-          .then((response) => {
-            if (!response.ok) {
-              throw response
-            }
-            return response
-          })
-          .then((data) => {
-            successNonblockingAjaxRequest(data, request)
-          })
-          .catch((data) => {
-            errorNonblockingAjaxRequest(data, request)
-          })
-      }
-    }
-
-    scheduleNextNonblockingAjaxRequest()
-  }
-}
-
-// also needed by window_unload
-function scheduleNextNonblockingAjaxRequest () {
-  if (getNonblockingAjaxRequestCount()) {
-    let time
-    if (nonblockingAjaxRequestTimer < NON_BLOCKING_AJAX_REQUEST_TIME.length) {
-      time = NON_BLOCKING_AJAX_REQUEST_TIME[nonblockingAjaxRequestTimer]
-    } else {
-      time = Math.floor(Math.random() * NON_BLOCKING_AJAX_REQUEST_BACKOFF_RANGE)
-    }
-
-    window.setTimeout(sendNextNonblockingAjaxRequest, time)
-
-    nonblockingAjaxRequestTimer++
-  } else {
-    setSaveStreetIncomplete(false)
-  }
-}
-
-function removeNonblockingAjaxRequest (signature) {
-  for (const i in nonblockingAjaxRequests) {
-    if (nonblockingAjaxRequests[i].signature === signature) {
-      nonblockingAjaxRequests.splice(i, 1)
-      break
-    }
-  }
-}
-
-function errorNonblockingAjaxRequest (data, request) {
-  // Do not execute the error function immediately if there is
-  // a directive to retry a certain number of times first.
-  if (request.errorFunc && !request.maxRetries) {
-    request.errorFunc(data)
-  }
-
-  request.tryCount++
-  request.inProgress = false
-
-  // Abort resending if the max number of tries has been hit.
-  if (request.maxRetries && request.tryCount >= request.maxRetries) {
-    nonblockingAjaxRequestTimer = 0
-    hideNoConnectionMessage()
-    removeNonblockingAjaxRequest(request.signature)
-    if (request.errorFunc) {
-      request.errorFunc(data)
-    }
-  }
-}
-
-function successNonblockingAjaxRequest (data, request) {
-  nonblockingAjaxRequestTimer = 0
-
-  hideNoConnectionMessage()
-
-  removeNonblockingAjaxRequest(request.signature)
-
-  if (request.doneFunc) {
-    request.doneFunc(data)
-  }
-
-  scheduleNextNonblockingAjaxRequest()
-}
-
-// Non-blocking AJAX requests are checked to see if any are
-// in progress before a window is unloaded
-
 function checkIfChangesSaved () {
-  // don’t do for settings deliberately
-
   if (store.getState().errors.abortEverything) {
     return
   }
@@ -204,12 +37,6 @@ function checkIfChangesSaved () {
 
   if (getSaveStreetIncomplete()) {
     showWarning = true
-  } else {
-    for (const i in nonblockingAjaxRequests) {
-      if (!nonblockingAjaxRequests[i].allowToClosePage) {
-        showWarning = true
-      }
-    }
   }
 
   // If thumbnail needs to be saved before window close, show warning.
@@ -218,24 +45,30 @@ function checkIfChangesSaved () {
   }
 
   if (showWarning) {
-    nonblockingAjaxRequestTimer = 0
-    scheduleNextNonblockingAjaxRequest()
     saveStreetThumbnail(
       store.getState().street,
       SAVE_THUMBNAIL_EVENTS.BEFOREUNLOAD
     )
-    return 'Your changes have not been saved yet. Please return to the page, check your Internet connection, and wait a little while to allow the changes to be saved.'
+
+    return true
   }
 }
 
 export function onWindowBeforeUnload (event) {
-  const text = checkIfChangesSaved()
+  const shouldPrompt = checkIfChangesSaved()
 
-  // NOTE: custom text is no longer returned as a message in many browsers,
-  // e.g. Chrome 51. see:
-  // https://developers.google.com/web/updates/2016/04/chrome-51-deprecations?hl=en#remove_custom_messages_in_onbeforeunload_dialogs
-  if (text) {
-    event.returnValue = text
-    return text
+  if (shouldPrompt) {
+    // HTML specification for prompting users if they want to leave
+    // Not supported in all browsers
+    event.preventDefault()
+
+    // Custom text prompts are no longer displayed in most browsers. See:
+    // https://developers.google.com/web/updates/2016/04/chrome-51-deprecations?hl=en#remove_custom_messages_in_onbeforeunload_dialogs
+    // `event.returnValue` just needs to be set to _any_ string or a string
+    // is returned from this handler. The browser-defined prompt will display.
+    // No translation is needed.
+    const string = 'Your changes have not been saved yet.'
+    event.returnValue = string
+    return string
   }
 }

@@ -1,4 +1,3 @@
-import { debug } from '../preinit/debug_settings'
 import { initSystemCapabilities } from '../preinit/system_capabilities'
 import { initializeFlagSubscribers } from '../app/flag_utils'
 import { initCoil } from '../integrations/coil'
@@ -14,18 +13,17 @@ import { getPromoteStreet, remixStreet } from '../streets/remix'
 import { fetchLastStreet } from '../streets/xhr'
 import { loadSignIn } from '../users/authentication'
 import { updateSettingsFromCountryCode } from '../users/localization'
-import { detectGeolocation } from '../users/geolocation'
 import { initSettingsStoreObserver } from '../users/settings'
 import store, { observeStore } from '../store'
 import { openGallery } from '../store/actions/gallery'
 import { everythingLoaded } from '../store/slices/app'
+import { detectGeolocation } from '../store/slices/user'
 import { showDialog } from '../store/slices/dialogs'
 import { addEventListeners } from './event_listeners'
 import { getMode, MODES, processMode } from './mode'
 import { processUrl } from './page_url'
 import { startListening } from './keypress'
 import { registerKeypresses } from './keyboard_commands'
-import { scheduleNextLiveUpdateCheck } from './live_update'
 import { loadImages } from './load_resources'
 
 let serverContacted
@@ -70,14 +68,15 @@ export async function initialize () {
   // Geolocation
   // …detect country from IP for units, left/right-hand driving, and
   // adding location to streets
-  const geo = await detectGeolocation()
+  // This dispatch returns a Promise. We await it so we can update
+  // settings when it's retrieved. TODO: handle this in Redux
+  const geo = await store.dispatch(detectGeolocation())
+  if (geo?.payload?.country_code) {
+    updateSettingsFromCountryCode(geo.payload.country_code)
+  }
 
   // Parallel tasks
-  await Promise.all([loadImages(), geo, initLocale()])
-
-  if (geo && geo.country_code) {
-    updateSettingsFromCountryCode(geo.country_code)
-  }
+  await Promise.all([loadImages(), initLocale()])
 
   // Sign in
   // …sign in info from our API (if not previously cached) – and subsequent
@@ -122,10 +121,6 @@ function onEverythingLoaded () {
   showConsoleMessage()
 
   store.dispatch(everythingLoaded())
-
-  if (debug.forceLiveUpdate) {
-    scheduleNextLiveUpdateCheck()
-  }
 
   const mode = getMode()
   if (mode === MODES.USER_GALLERY) {
