@@ -20,9 +20,9 @@ Here's some of the features that are currently available to Streetmix+ members, 
 - Rename street segments
 - Change environmental backgrounds
 - Export images without watermark
+- Export images at print-ready resolutions
 - New segments: double decker bus, microvan, and autonomous shuttles
 - Unlimited streets (Technically, everyone does have unlimited streets already, but this creates some data storage problems on our end, so we need to start setting caps. We'll do this in a fair way. Stay tuned for more.)
-- **Coming soon:** Export images at print-ready resolutions
 - **Coming soon:** Member-only Discord community
 
 Streetmix+ members will also be able to help us prioritize future features to come!
@@ -37,11 +37,19 @@ You can sign up for Streetmix+ membership through multiple platforms:
 
 Streetmix+ membership does not activate immediately (_this is something we're working on!_), but someone on our team will reach out to you to activate Streetmix+ on your Streetmix account within one week. If you do not hear from us, or if you are a past or current OpenCollective contributor, please contact us at hello@streetmix.net.
 
+<div className="stmx-cta-container">
+  <a className="stmx-cta-button" href="https://opencollective.com/streetmix/contribute/streetmix-membership-monthly-1274" target="_blank">Sign up with OpenCollective</a>
+</div>
+
 ### Patreon
 
 [Patreon](https://www.patreon.com/streetmix) is a great option for members that are already supporting other artists or creators on Patreon.
 
 Streetmix+ membership does not activate immediately (_this is something we're working on!_), but someone on our team will reach out to you to activate Streetmix+ on your Streetmix account within one week. If you do not hear from us, please contact us at hello@streetmix.net.
+
+<div className="stmx-cta-container">
+  <a className="stmx-cta-button" href="https://www.patreon.com/streetmix" target="_blank">Sign up with Patreon</a>
+</div>
 
 ### GitHub Sponsors
 
@@ -69,13 +77,21 @@ If you have issues with Coil, please see the [Troubleshooting](#troubleshooting-
 
 ## Confirming your membership
 
-When your Streetmix+ membership is active, you'll see an icon beside your user account name, like so:
+When your Streetmix+ membership is active, you'll see an icon beside your user account name, like this:
 
 ![Menu bar with Streetmix+ icon](/img/streetmix-plus/member-icon.png)
 
 ## Troubleshooting
 
 If you have trouble accessing Streetmix+ features, here are some troubleshooting tips.
+
+### Troubleshooting OpenCollective
+
+If you have signed up for a Streetmix+ membership but have not been contacted about activating it, please e-mail us at hello@streetmix.net. This may happen for the following reasons:
+
+- You have been a contributor since before August 2022. We are slowly reaching out to existing contributors to set up access.
+- You may have signed up for OpenCollective using a guest account. Unfortunately we have no way of contacting people with guest accounts. In order to verify that you are subscribing, please set up an OpenCollective account.
+- Please allow up to one week if you have recently signed up. We appreciate the patience!
 
 ### Troubleshooting Coil
 
