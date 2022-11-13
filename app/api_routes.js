@@ -691,7 +691,7 @@ routes.put('/api/v1/streets/:street_id', jwtCheck, resources.v1.streets.put)
 
 /**
  * @swagger
- * /api/v1/streets/images/{street_id}:
+ * /api/v1/streets/{street_id}/images:
  *   delete:
  *     description: Deletes street thumbnail from cloudinary
  *     tags:
@@ -759,20 +759,52 @@ routes.put('/api/v1/streets/:street_id', jwtCheck, resources.v1.streets.put)
  *
  */
 routes.post(
-  '/api/v1/streets/images/:street_id',
+  '/api/v1/streets/:street_id/images',
   bodyParser.text({ limit: '3mb' }),
   jwtCheck,
   resources.v1.street_images.post
 )
 routes.delete(
-  '/api/v1/streets/images/:street_id',
+  '/api/v1/streets/:street_id/images',
   jwtCheck,
   resources.v1.street_images.delete
 )
 routes.get(
-  '/api/v1/streets/images/:street_id',
+  '/api/v1/streets/:street_id/images',
   jwtCheck,
   resources.v1.street_images.get
+)
+
+/**
+ * @swagger
+ * /api/v1/streets/{street_id}/remixes:
+ *   get:
+ *     description: Returns all remixes of a street
+ *     tags:
+ *       - streets
+ *       - remixes
+ *     parameters:
+ *      - in: path
+ *        name: street_id
+ *        schema:
+ *          type: string
+ *          format: uuid
+ *        required: true
+ *        description: ID of the street
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: user streets
+ *         schema:
+ *           type: array
+ *           items:
+ *             $ref: '#/definitions/Street'
+ */
+routes.get(
+  '/api/v1/streets/:street_id/remixes',
+  jwtCheck,
+  resources.v1.street_remixes.get
 )
 
 /**
