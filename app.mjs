@@ -14,10 +14,10 @@ import * as controllers from './app/controllers/index.mjs'
 import * as requestHandlers from './app/lib/request_handlers/index.mjs'
 import { initCloudinary } from './app/lib/cloudinary.mjs'
 import { compileSVGSprites } from './app/lib/svg_sprite.mjs'
-import appURL from './app/lib/url.js'
+import appURL from './app/lib/url.mjs'
 import apiRoutes from './app/api_routes.mjs'
 import serviceRoutes from './app/service_routes.mjs'
-import logger from './app/lib/logger.js'
+import logger from './app/lib/logger.mjs'
 import jwtCheck from './app/authentication.mjs'
 
 initCloudinary()
@@ -40,7 +40,9 @@ const cacheTimestamp = Date.now()
 app.locals.cacheTimestamp = cacheTimestamp
 
 process.on('uncaughtException', function (error) {
-  logger.error(chalk`[process] {bold Uncaught exception:} ${error}`)
+  logger.error(
+    '[process] ' + chalk.redBright.bold('Uncaught exception: ') + error
+  )
 
   console.trace()
   process.exit(1)
@@ -50,7 +52,7 @@ process.on('uncaughtException', function (error) {
 // Note: various sources tell us that this does not work on Windows
 process.on('SIGINT', function () {
   if (process.env.NODE_ENV === 'development') {
-    logger.info(chalk`[express] {yellow.bold Stopping Streetmix!}`)
+    logger.info('[express] ' + chalk.yellowBright.bold('Stopping Streetmix!'))
   }
   process.exit()
 })
