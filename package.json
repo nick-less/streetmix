@@ -106,7 +106,7 @@
     "@radix-ui/react-direction": "1.0.0",
     "@radix-ui/react-icons": "1.2.0",
     "@radix-ui/react-popover": "1.0.4",
-    "@radix-ui/react-radio-group": "1.1.1",
+    "@radix-ui/react-radio-group": "1.1.2",
     "@radix-ui/react-slider": "1.1.0",
     "@radix-ui/react-switch": "1.0.1",
     "@reduxjs/toolkit": "1.9.3",
@@ -185,7 +185,7 @@
     "uuid": "9.0.0",
     "web-monetization-polyfill": "2.0.0",
     "whatwg-fetch": "3.6.2",
-    "winston": "3.4.0"
+    "winston": "3.8.2"
   },
   "devDependencies": {
     "@babel/core": "7.21.0",
@@ -215,7 +215,7 @@
     "eslint-plugin-promise": "6.1.1",
     "eslint-plugin-react": "7.32.2",
     "eslint-plugin-react-hooks": "4.6.0",
-    "husky": "8.0.1",
+    "husky": "8.0.3",
     "jest": "29.5.0",
     "jest-canvas-mock": "2.4.0",
     "jest-date-mock": "1.0.8",
@@ -230,6 +230,6 @@
     "stylelint-config-standard-scss": "7.0.1",
     "stylelint-csstree-validator": "2.1.0",
     "stylelint-prettier": "3.0.0",
-    "supertest": "6.2.4"
+    "supertest": "6.3.3"
   }
 }
