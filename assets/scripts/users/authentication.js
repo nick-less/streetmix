@@ -12,11 +12,7 @@ import { setPromoteStreet } from '../streets/remix'
 import { fetchStreetFromServer, createNewStreetOnServer } from '../streets/xhr'
 import store from '../store'
 import { updateSettings } from '../store/slices/settings'
-import {
-  setSignInData,
-  clearSignInData,
-  rememberUserProfile
-} from '../store/slices/user'
+import { setSignInData, clearSignInData } from '../store/slices/user'
 import { showDialog } from '../store/slices/dialogs'
 import { updateStreetIdMetadata } from '../store/slices/street'
 import { addToast } from '../store/slices/toasts'
@@ -176,8 +172,6 @@ async function refreshLoginToken (refreshToken) {
     if (!response.ok) {
       throw response
     }
-
-    return
   } catch (error) {
     errorRefreshLoginToken(error)
   }
@@ -205,6 +199,8 @@ function errorRefreshLoginToken (data) {
  */
 async function fetchSignInDetails (userId) {
   try {
+    // TODO: See if it's possible to use RTK Query's implementation of getUser
+    // because that will cache user details.
     const response = await getUser(userId)
 
     if (response.status !== 200) {
@@ -236,25 +232,9 @@ function receiveSignInDetails (details) {
   }
   store.dispatch(setSignInData(signInData))
   saveSignInDataLocally()
-
-  // cache the users profile image so we don't have to request it later
-  store.dispatch(rememberUserProfile(details))
 }
 
 function errorReceiveSignInDetails (data) {
-  // If we get data.status === 0, it means that the user opened the page and
-  // closed is quickly, so the request was aborted. We choose to do nothing
-  // instead of clobbering sign in data below and effectively signing the
-  // user out. Issue #302.
-
-  // It also, unfortunately, might mean regular server failure, too. Marcin
-  // doesn’t know what to do with it yet. Open issue #339.
-
-  /* if (data.status === 0) {
-    showError(ERRORS.NEW_STREET_SERVER_FAILURE, true)
-    return
-  } */
-
   if (data.status === 401) {
     signOut(true)
 
