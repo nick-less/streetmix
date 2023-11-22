@@ -15,12 +15,12 @@ jobs:
       CYPRESS_INSTALL_BINARY: "0"
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     # Use the current LTS version of Node.js
     - name: Use Node.js 18
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
     # TODO: only install necessary dependencies
     - name: Install dependencies
       run: npm install

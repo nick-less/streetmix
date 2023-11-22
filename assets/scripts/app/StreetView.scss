@@ -6,8 +6,7 @@
   position: absolute;
   display: block;
   inset: -$gallery-height 0 -20px; // Bottom inset hides the scrollbar
-  overflow-x: scroll;
-  overflow-y: hidden;
+  overflow: scroll hidden;
   touch-action: pan-x;
 
   /* Prevent overscroll from doing forward/back navigation on some browsers */
@@ -22,9 +21,13 @@
   position: absolute;
   display: block;
   left: 0;
-  top: 0;
+  bottom: 130px;
   height: $canvas-height + 45;
   user-select: none;
+
+  body.read-only & {
+    bottom: 50px;
+  }
 }
 
 #street-section-editable {

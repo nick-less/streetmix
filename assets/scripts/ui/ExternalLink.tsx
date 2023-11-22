@@ -1,20 +1,21 @@
 import React from 'react'
 import { useSelector } from '../store/hooks'
 
-interface Props {
+interface ExternalLinkProps {
   children: React.ReactNode
   href: string
+  className: string
 }
 
 function ExternalLink ({
   children,
   href,
   ...restProps
-}: Props): React.ReactNode {
+}: ExternalLinkProps): React.ReactElement {
   const offline = useSelector((state) => state.system.offline)
 
   if (offline) {
-    return children
+    return <>{children}</>
   }
 
   return (

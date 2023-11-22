@@ -35,3 +35,6 @@ coverage
 
 # Ignore test artifacts
 cypress/screenshots
+
+# Sentry Auth Token
+.sentryclirc

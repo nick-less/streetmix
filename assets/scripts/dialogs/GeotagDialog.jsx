@@ -10,7 +10,6 @@ import {
   AttributionControl,
   useMapEvents
 } from 'react-leaflet'
-// import { AttributionControl } from 'react-leaflet/AttributionControl'
 import { PELIAS_HOST_NAME, PELIAS_API_KEY } from '../app/config'
 import { isOwnedByCurrentUser } from '../streets/owner'
 import { setMapState } from '../store/slices/map'
@@ -179,7 +178,7 @@ function GeotagDialog () {
   const handleMarkerDragEnd = (event) => {
     const latlng = event.target.getLatLng()
     reverseGeocode(latlng).then((res) => {
-      updateMap(latlng, res.features[0].properties, res.features[0].label)
+      updateMap(latlng, res.features[0].properties)
     })
   }
 
