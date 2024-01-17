@@ -1,6 +1,5 @@
-import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
-import type { Segment, StreetLocation } from '../../types'
+import type { PayloadAction } from '@reduxjs/toolkit'
 import { getVariantString } from '../../segments/variant_utils'
 import { DEFAULT_SKYBOX } from '../../sky/constants'
 import {
@@ -9,6 +8,7 @@ import {
   BUILDING_RIGHT_POSITION
 } from '../../segments/constants'
 import { getSegmentInfo, getSegmentVariantInfo } from '../../segments/info'
+import type { Segment, StreetLocation } from '@streetmix/types'
 
 // TODO: many of these values were "optional" but it might be worthwhile to
 // convert most of them to values that cannot be "undefined" to make it easier
@@ -16,7 +16,7 @@ import { getSegmentInfo, getSegmentVariantInfo } from '../../segments/info'
 interface StreetState {
   segments: Segment[]
   remainingWidth: number
-  environment: string
+  skybox: string
   immediateRemoval: boolean
   creatorId?: string | null
   namespacedId?: number
@@ -31,7 +31,7 @@ interface StreetState {
   rightBuildingHeight: number
   leftBuildingVariant?: string
   rightBuildingVariant?: string
-  editCount?: number
+  editCount: number
   originalStreetId?: string | null // UUID, if set
   updatedAt?: string // Datetime string
   clientUpdatedAt?: string // Datetime string
@@ -43,11 +43,12 @@ interface StreetState {
 const initialState: StreetState = {
   segments: [],
   remainingWidth: 0,
-  environment: DEFAULT_SKYBOX,
+  skybox: DEFAULT_SKYBOX,
   userUpdated: false,
   leftBuildingHeight: 0,
   rightBuildingHeight: 0,
-  immediateRemoval: true
+  immediateRemoval: true,
+  editCount: 0
 }
 
 const streetSlice = createSlice({
@@ -423,8 +424,8 @@ const streetSlice = createSlice({
       }
     },
 
-    setEnvironment (state, action) {
-      state.environment = action.payload
+    setSkybox (state, action) {
+      state.skybox = action.payload
     }
   }
 })
@@ -457,7 +458,7 @@ export const {
   removeBuildingFloor,
   setBuildingFloorValue,
   setBuildingVariant,
-  setEnvironment
+  setSkybox
 } = streetSlice.actions
 
 export default streetSlice.reducer
