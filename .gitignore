@@ -34,7 +34,10 @@ coverage
 /.settings/
 
 # Ignore test artifacts
+# https://docs.cypress.io/guides/core-concepts/writing-and-organizing-tests#Asset-Files
+cypress/downloads
 cypress/screenshots
+cypress/videos
 
 # Sentry Auth Token
 .sentryclirc
