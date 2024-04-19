@@ -1,0 +1,115 @@
+@use "sass:color";
+
+html {
+  height: 100%;
+  overflow: hidden;
+
+  /* Global box-sizing "reset" to the "quirks" box model */
+  box-sizing: border-box;
+}
+
+/* Inherit the box-sizing everywhere */
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative; // Fixes iOS Safari overflow: hidden not working bug
+  background: white;
+  overscroll-behavior: none;
+  text-size-adjust: none;
+
+  &:not(.safari) {
+    perspective: 500px;
+  }
+}
+
+// Reset buttons to have no default appearance
+button {
+  appearance: none;
+  border: 0;
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  inset: 0;
+}
+
+.main-screen {
+  position: relative;
+  z-index: $z-01-main-screen;
+  flex-grow: 1;
+
+  body:not(.safari) & {
+    perspective: 2000px;
+  }
+}
+
+a,
+.link-like {
+  @include tap-highlight-color("transparent !important");
+
+  cursor: pointer;
+  color: color.adjust($ui-colour, $lightness: -30%);
+
+  &:hover {
+    color: color.adjust($ui-colour, $lightness: -50%);
+  }
+
+  &:active {
+    color: color.adjust($ui-colour, $lightness: -70%);
+  }
+}
+
+.link-like {
+  text-decoration: underline;
+}
+
+input[type="text"],
+textarea {
+  padding: 3px;
+
+  &[disabled] {
+    background: color.adjust(
+      fade-out($ui-colour, 0.7),
+      $saturation: -100%
+    ) !important;
+    border-color: color.adjust($ui-colour, $saturation: -100%) !important;
+  }
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid $colour-turquoise-350;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: $header-font-family;
+}
+
+// Some utility classes.
+
+.underline {
+  text-decoration: underline;
+}

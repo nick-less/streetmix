@@ -24,7 +24,6 @@
 
 <p align="center">
   <a href="https://github.com/streetmix/streetmix/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/streetmix/streetmix/ci.yml?branch=main&style=for-the-badge"></a>
-  <a href="https://codeclimate.com/github/streetmix/streetmix"><img alt="Code Climate" src="https://img.shields.io/codeclimate/tech-debt/streetmix/streetmix.svg?style=for-the-badge"></a>
   <a href="https://codecov.io/gh/streetmix/streetmix"><img alt="Code coverage" src="https://img.shields.io/codecov/c/gh/streetmix/streetmix.svg?label=test%20coverage&style=for-the-badge"></a>
 </p>
 
@@ -76,7 +75,7 @@ Streetmix is a [Node.js](https://nodejs.org/) based project. Set up your own by 
 ## Copyright
 
 Copyright (c) 2013-2018 Code for America and contributors.  
-Copyright (c) 2019-2023 Streetmix LLC.  
+Copyright (c) 2019-2024 Streetmix LLC.  
 See [LICENSE][] for details.
 
 [license]: https://github.com/streetmix/streetmix/blob/main/LICENSE
