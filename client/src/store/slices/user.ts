@@ -1,27 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import USER_ROLES from '../../../../app/data/user_roles.json'
 import { getGeoIp } from '../../util/api'
-import type { UserProfile } from '../../types'
-import type { PayloadAction, SerializedError } from '@reduxjs/toolkit'
-
-interface UserSignInDetails {
-  token: string
-  refreshToken: string
-  userId: string
-  details: UserProfile
-}
-
-interface UserState {
-  signInData: UserSignInDetails | null
-  signedIn: boolean
-  isSubscriber: boolean
-  isCoilPluginSubscriber: boolean
-  geolocation: {
-    attempted: boolean
-    data: null
-    error: string | SerializedError | null
-  }
-}
+import type { UserState, UserProfile, UserSignInDetails } from '../../types'
+import type { PayloadAction } from '@reduxjs/toolkit'
 
 const initialState: UserState = {
   signInData: null,

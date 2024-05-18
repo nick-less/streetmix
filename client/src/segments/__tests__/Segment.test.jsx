@@ -2,7 +2,7 @@ import React from 'react'
 import { vi } from 'vitest'
 import { userEvent } from '@testing-library/user-event'
 
-import { render, screen, act } from '~/test/helpers/render'
+import { render, screen } from '~/test/helpers/render'
 import { infoBubble } from '~/src/info_bubble/info_bubble'
 import { setLastStreet } from '~/src/streets/data_model'
 import { SETTINGS_UNITS_METRIC } from '~/src/users/constants'
@@ -34,7 +34,6 @@ describe('Segment', () => {
     segment = {
       type,
       variantString,
-      segmentType: type,
       id: '1',
       width: currentWidth,
       randSeed: 1
@@ -81,9 +80,7 @@ describe('Segment', () => {
       }
     )
 
-    await act(async () => {
-      await user.hover(screen.getByTestId('segment'))
-    })
+    await user.hover(screen.getByTestId('segment'))
 
     expect(infoBubble.considerShowing).toHaveBeenCalled()
   })
@@ -107,10 +104,8 @@ describe('Segment', () => {
       }
     )
 
-    await act(async () => {
-      await user.hover(screen.getByTestId('segment'))
-      await user.unhover(screen.getByTestId('segment'))
-    })
+    await user.hover(screen.getByTestId('segment'))
+    await user.unhover(screen.getByTestId('segment'))
 
     expect(infoBubble.dontConsiderShowing).toHaveBeenCalledTimes(1)
   })
@@ -134,10 +129,8 @@ describe('Segment', () => {
         }
       )
 
-      await act(async () => {
-        await user.hover(screen.getByTestId('segment'))
-        await user.keyboard('-')
-      })
+      await user.hover(screen.getByTestId('segment'))
+      await user.keyboard('-')
 
       expect(store.getState().street.segments[activeElement].width).toEqual(
         currentWidth - increment
@@ -162,10 +155,8 @@ describe('Segment', () => {
         }
       )
 
-      await act(async () => {
-        await user.hover(screen.getByTestId('segment'))
-        await user.keyboard('+')
-      })
+      await user.hover(screen.getByTestId('segment'))
+      await user.keyboard('+')
 
       expect(store.getState().street.segments[activeElement].width).toEqual(
         currentWidth + increment
@@ -192,10 +183,8 @@ describe('Segment', () => {
 
       setLastStreet() // ToDo: needs to be refactored
 
-      await act(async () => {
-        await user.hover(screen.getByTestId('segment'))
-        await user.keyboard('{Delete}')
-      })
+      await user.hover(screen.getByTestId('segment'))
+      await user.keyboard('{Delete}')
 
       expect(infoBubble.hide).toHaveBeenCalledTimes(1)
       expect(infoBubble.hideSegment).toHaveBeenCalledTimes(1)
@@ -220,10 +209,8 @@ describe('Segment', () => {
         }
       )
 
-      await act(async () => {
-        await user.hover(screen.getByTestId('segment'))
-        await user.keyboard('{Shift>}{Delete}{/Shift}')
-      })
+      await user.hover(screen.getByTestId('segment'))
+      await user.keyboard('{Shift>}{Delete}{/Shift}')
 
       expect(store.getState().street.segments.length).toEqual(0)
     })

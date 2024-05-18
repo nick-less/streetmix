@@ -8,7 +8,7 @@
   },
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": "^18.x || ^20.x",
+    "node": "^18.x || ^20.x || ^22.x",
     "npm": ">=9.x"
   },
   "type": "module",
@@ -38,7 +38,7 @@
     "pretest:models": "NODE_ENV=test npm run db:migrate",
     "test:models": "NODE_ENV=test vitest --watchAll --testPathPattern=app/db/models/_tests_",
     "posttest:models": "NODE_ENV=test npm run db:reset",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "browserslist": [
     "> 0.5%",
@@ -85,14 +85,14 @@
     "hbs": "4.2.0",
     "helmet": "7.1.0",
     "jwks-rsa": "3.1.0",
-    "nanoid": "5.0.4",
+    "nanoid": "5.0.7",
     "newrelic": "11.7.0",
     "nodemon": "3.0.1",
     "passport": "0.6.0",
     "passport-oauth": "1.0.0",
     "passport-patreon": "1.0.1",
     "pg": "8.11.5",
-    "sequelize": "6.35.2",
+    "sequelize": "6.37.3",
     "sequelize-cli": "6.6.2",
     "sequelize-mock": "0.10.2",
     "svg-sprite": "2.0.2",
@@ -102,12 +102,12 @@
     "winston": "3.13.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.2.2",
+    "@commitlint/cli": "19.3.0",
     "@commitlint/config-conventional": "19.2.2",
     "@faker-js/faker": "8.4.1",
     "@typescript-eslint/eslint-plugin": "7.7.0",
     "@typescript-eslint/parser": "7.7.0",
-    "@vitest/coverage-v8": "1.5.0",
+    "@vitest/coverage-v8": "1.6.0",
     "axios-mock-adapter": "1.22.0",
     "concurrently": "8.2.2",
     "cypress": "13.6.4",
@@ -123,11 +123,11 @@
     "eslint-plugin-promise": "6.1.1",
     "eslint-plugin-react": "7.34.1",
     "eslint-plugin-react-hooks": "4.6.0",
-    "husky": "8.0.3",
+    "husky": "9.0.11",
     "lint-staged": "15.2.2",
     "prettier": "3.2.5",
-    "supertest": "6.3.4",
+    "supertest": "7.0.0",
     "typescript": "5.2.2",
-    "vitest": "1.5.0"
+    "vitest": "1.6.0"
   }
 }
