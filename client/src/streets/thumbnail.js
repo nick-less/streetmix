@@ -21,7 +21,7 @@ const BOTTOM_BACKGROUND = 'rgb(216, 211, 203)'
 const BACKGROUND_DIRT_COLOUR = 'rgb(53, 45, 39)'
 const SILHOUETTE_FILL_COLOUR = 'rgb(240, 240, 240)'
 
-const SEGMENT_NAME_FONT = 'Rubik'
+const SEGMENT_NAME_FONT = 'Rubik Variable'
 const SEGMENT_NAME_FONT_SIZE = 12
 const SEGMENT_NAME_FONT_WEIGHT = '400'
 
@@ -29,7 +29,7 @@ const STREET_NAME_FONT = 'Overpass Variable'
 const STREET_NAME_FONT_SIZE = 70
 const STREET_NAME_FONT_WEIGHT = '700'
 
-const WATERMARK_FONT = 'Rubik'
+const WATERMARK_FONT = 'Rubik Variable'
 const WATERMARK_FONT_SIZE = 24
 const WATERMARK_FONT_WEIGHT = '600'
 const WATERMARK_RIGHT_MARGIN = 15
@@ -707,7 +707,6 @@ function drawWatermark (ctx, dpi, invert = false) {
  * @param {Number} params.dpi - Pixel density of canvas
  * @param {Number} params.multiplier - Scale factor of image
  * @param {Boolean} params.silhouette - If `true`, image is a silhouette
- * @param {Boolean} params.bottomAligned - TODO: Document this
  * @param {Boolean} params.transparentSky - If `true`, sky is transparent
  * @param {Boolean} params.segmentNamesAndWidths - If `true`, include segment names and widths
  * @param {Boolean} params.streetName - If `true`, include street nameplate
@@ -723,7 +722,6 @@ export function drawStreetThumbnail (
     dpi,
     multiplier,
     silhouette,
-    bottomAligned,
     transparentSky,
     segmentNamesAndWidths,
     streetName,
@@ -738,12 +736,8 @@ export function drawStreetThumbnail (
     occupiedWidth += segment.width
   }
 
-  let offsetTop
-  if (bottomAligned) {
-    offsetTop = height - 180 * multiplier
-  } else {
-    offsetTop = (height + 5 * TILE_SIZE * multiplier) / 2
-  }
+  // Align things to bottom edge of image
+  let offsetTop = height - 180 * multiplier
   if (segmentNamesAndWidths) {
     offsetTop -= SAVE_AS_IMAGE_NAMES_WIDTHS_PADDING * multiplier
   }
