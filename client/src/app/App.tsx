@@ -4,6 +4,7 @@ import { DndProvider } from 'react-dnd'
 import { DirectionProvider, type Direction } from '@radix-ui/react-direction'
 import MultiBackend from 'react-dnd-multi-backend'
 import HTML5toTouch from 'react-dnd-multi-backend/dist/esm/HTML5toTouch'
+
 import MenusContainer from '../menubar/MenusContainer'
 import StreetNameplateContainer from '../streets/StreetNameplateContainer'
 import InfoBubble from '../info_bubble/InfoBubble'
@@ -23,7 +24,6 @@ import StreetView from './StreetView'
 import PrintContainer from './PrintContainer'
 import WelcomePanel from './WelcomePanel'
 import NotificationBar from './NotificationBar'
-import { setStreetSectionTop } from './window_resize'
 import Loading from './Loading'
 import SponsorBanner from './SponsorBanner'
 
@@ -48,13 +48,6 @@ function App (): React.ReactElement {
     void init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // After loading, do ancient DOM stuff
-  useEffect(() => {
-    if (!isLoading && everythingLoaded) {
-      setStreetSectionTop()
-    }
-  }, [isLoading, everythingLoaded])
 
   // Set color mode on top level DOM element
   useEffect(() => {
