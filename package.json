@@ -73,7 +73,7 @@
     "axios": "1.7.2",
     "axios-retry": "4.1.0",
     "chalk": "5.3.0",
-    "cloudinary": "2.2.0",
+    "cloudinary": "2.4.0",
     "compression": "1.7.4",
     "cookie-parser": "1.4.6",
     "cookie-session": "2.1.0",
@@ -86,7 +86,7 @@
     "helmet": "7.1.0",
     "jwks-rsa": "3.1.0",
     "nanoid": "5.0.7",
-    "newrelic": "11.18.0",
+    "newrelic": "12.0.0",
     "nodemon": "3.1.1",
     "passport": "0.7.0",
     "passport-oauth": "1.0.0",
@@ -123,11 +123,11 @@
     "eslint-plugin-promise": "6.1.1",
     "eslint-plugin-react": "7.34.1",
     "eslint-plugin-react-hooks": "4.6.0",
-    "husky": "9.0.11",
+    "husky": "9.1.4",
     "lint-staged": "15.2.2",
     "prettier": "3.3.2",
     "supertest": "7.0.0",
-    "typescript": "5.4.5",
+    "typescript": "5.5.4",
     "vitest": "1.6.0"
   }
 }
