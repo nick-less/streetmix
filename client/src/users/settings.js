@@ -21,19 +21,22 @@ export function loadSettings () {
   // Skip this if localStorage is corrupted
   let localSettings = {}
   try {
-    if (window.localStorage.getItem(LOCAL_STORAGE_SETTINGS_ID)) {
-      localSettings = JSON.parse(
-        window.localStorage.getItem(LOCAL_STORAGE_SETTINGS_ID)
-      )
-    }
+    const parsed = JSON.parse(
+      window.localStorage.getItem(LOCAL_STORAGE_SETTINGS_ID)
+    )
+    localSettings = parsed ?? {}
   } catch (err) {
     console.error(err)
   }
 
   // Merge settings to a new object. Server settings take priority and will
   // overwrite local settings.
-
   const settings = Object.assign({}, localSettings, serverSettings)
+
+  // If `units` setting uses the legacy value of `2`, change it to `0`
+  if (settings.units === 2) {
+    settings.units = 0
+  }
 
   // Except for last street settings -- if we've just signed in, local settings
   // take priority.

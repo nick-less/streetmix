@@ -4,10 +4,11 @@
  */
 import React from 'react'
 import Tippy, { useSingleton } from '@tippyjs/react'
+
 import type { TippyProps } from '@tippyjs/react'
 import 'tippy.js/dist/tippy.css'
 import 'tippy.js/animations/shift-toward.css'
-import './Tooltip.scss'
+import './Tooltip.css'
 
 const TOOLTIP_DEFAULT_PLACEMENT: TippyProps['placement'] = 'top'
 const TOOLTIP_OFFSET: TippyProps['offset'] = [0, 10]

@@ -1,11 +1,12 @@
 import React from 'react'
+
 import { useSelector } from '../../store/hooks'
-import StreetMetaWidthContainer from './StreetMetaWidthContainer'
+import StreetMetaWidth from './StreetMetaWidth'
 import StreetMetaAuthor from './StreetMetaAuthor'
 import StreetMetaDate from './StreetMetaDate'
 import StreetMetaGeotag from './StreetMetaGeotag'
 import StreetMetaAnalytics from './StreetMetaAnalytics'
-import './StreetMeta.scss'
+import './StreetMeta.css'
 
 function StreetMeta (): React.ReactElement {
   const enableAnalytics = useSelector(
@@ -14,7 +15,7 @@ function StreetMeta (): React.ReactElement {
 
   return (
     <div className="street-meta">
-      <StreetMetaWidthContainer />
+      <StreetMetaWidth />
       {enableAnalytics && <StreetMetaAnalytics />}
       <StreetMetaGeotag />
       <StreetMetaAuthor />
