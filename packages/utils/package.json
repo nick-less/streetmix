@@ -1,11 +1,11 @@
 {
-  "name": "@streetmix/export-image",
+  "name": "@streetmix/utils",
   "version": "0.0.1",
-  "description": "image exporter",
+  "description": "utilities shared between client/server",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/streetmix/streetmix.git",
-    "directory": "packages/export-image"
+    "directory": "packages/utils"
   },
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -14,10 +14,5 @@
     "build": "tsc --project tsconfig.json --outDir build",
     "start": "echo Nothing to run!"
   },
-  "dependencies": {
-    "@fontsource/geist-sans": "5.1.0",
-    "@fontsource/overpass": "5.1.1",
-    "@fontsource/rubik": "5.1.0",
-    "@napi-rs/canvas": "0.1.58"
-  }
+  "dependencies": {}
 }
