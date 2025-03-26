@@ -124,6 +124,11 @@
   --social-instagram: #e1306c;
   --social-instagram-hover: #c13584;
 
+  /* Bluesky
+     No brand guidelines found, color is picked from logo file */
+  --social-bluesky: #009bff;
+  --social-bluesky-hover: color-mix(in oklch, black 10%, var(--social-bluesky));
+
   /* Mastodon (https://joinmastodon.org/branding) */
   --social-mastodon: #6364ff;
   --social-mastodon-hover: #563acc;
@@ -177,6 +182,7 @@
   --z-02-menu-bar: var(--z-index-02);
   --z-03-street-name: var(--z-index-03);
   --z-03-gallery-message: var(--z-index-03);
+  --z-04-drag-layer: var(--z-index-04);
   --z-05-welcome: var(--z-index-05);
   --z-06-info-bubble: var(--z-index-06);
   --z-06-drag-handle: var(--z-index-06);
