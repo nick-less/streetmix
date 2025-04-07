@@ -48,13 +48,12 @@ import './Segment.css'
 export class Segment extends React.Component {
   static propTypes = {
     // Provided by parent
-    dataNo: PropTypes.number,
+    sliceIndex: PropTypes.number,
     enableAnalytics: PropTypes.bool,
     segment: PropTypes.object.isRequired,
     actualWidth: PropTypes.number.isRequired,
     units: PropTypes.number,
-    segmentPos: PropTypes.number,
-    updateSegmentData: PropTypes.func,
+    segmentLeft: PropTypes.number,
     updatePerspective: PropTypes.func,
 
     // Provided by store
@@ -87,12 +86,6 @@ export class Segment extends React.Component {
   }
 
   componentDidMount = () => {
-    this.props.updateSegmentData(
-      this.streetSegment,
-      this.props.dataNo,
-      this.props.segmentPos
-    )
-
     this.props.connectDragPreview(getEmptyImage(), {
       captureDraggingState: true
     })
@@ -112,7 +105,7 @@ export class Segment extends React.Component {
 
     this.initialRender = false
 
-    if (wasDragging && this.props.activeSegment === this.props.dataNo) {
+    if (wasDragging && this.props.activeSegment === this.props.sliceIndex) {
       infoBubble.considerShowing(
         false,
         this.streetSegment,
@@ -136,12 +129,6 @@ export class Segment extends React.Component {
     ) {
       this.handleSwitchSegments(prevProps.segment.variantString)
     }
-
-    this.props.updateSegmentData(
-      this.streetSegment,
-      this.props.dataNo,
-      this.props.segmentPos
-    )
   }
 
   componentWillUnmount = () => {
@@ -180,7 +167,7 @@ export class Segment extends React.Component {
       return
     }
 
-    this.props.setActiveSegment(this.props.dataNo)
+    this.props.setActiveSegment(this.props.sliceIndex)
 
     document.addEventListener('keydown', this.handleKeyDown)
     infoBubble.considerShowing(
@@ -195,7 +182,7 @@ export class Segment extends React.Component {
     infoBubble.dontConsiderShowing()
   }
 
-  renderSegmentCanvas = (variantType) => {
+  renderSegmentCanvas = (variantType, nodeRef) => {
     const isOldVariant = variantType === 'old'
     const { segment, connectDragSource, connectDropTarget } = this.props
 
@@ -205,7 +192,7 @@ export class Segment extends React.Component {
 
     return connectDragSource(
       connectDropTarget(
-        <div className="segment-canvas-container">
+        <div className="segment-canvas-container" ref={nodeRef}>
           <SegmentCanvas
             actualWidth={this.props.actualWidth}
             type={segment.type}
@@ -259,7 +246,7 @@ export class Segment extends React.Component {
         if (event.metaKey || event.ctrlKey || event.altKey) return
 
         event.preventDefault()
-        this.decrementSegmentWidth(this.props.dataNo, event.shiftKey)
+        this.decrementSegmentWidth(this.props.sliceIndex, event.shiftKey)
         break
       // Plus (+) may only triggered with shift key, so also check if
       // the same physical key (Equal) is pressed
@@ -268,7 +255,7 @@ export class Segment extends React.Component {
         if (event.metaKey || event.ctrlKey || event.altKey) return
 
         event.preventDefault()
-        this.incrementSegmentWidth(this.props.dataNo, event.shiftKey)
+        this.incrementSegmentWidth(this.props.sliceIndex, event.shiftKey)
         break
       case 'Backspace':
       case 'Delete':
@@ -296,7 +283,7 @@ export class Segment extends React.Component {
             ),
             component: 'TOAST_UNDO'
           })
-          this.props.removeSegmentAction(this.props.dataNo, false)
+          this.props.removeSegmentAction(this.props.sliceIndex, false)
         }
         break
       default:
@@ -317,7 +304,7 @@ export class Segment extends React.Component {
     const average = getSegmentCapacity(segment, capacitySource)?.average ?? null
     const actualWidth = this.calculateSegmentWidths()
     const elementWidth = actualWidth * TILE_SIZE
-    const translate = 'translateX(' + (this.props.segmentPos ?? 0) + 'px)'
+    const translate = 'translateX(' + (this.props.segmentLeft ?? 0) + 'px)'
 
     const segmentStyle = {
       width: elementWidth + 'px',
@@ -331,7 +318,7 @@ export class Segment extends React.Component {
 
     if (this.props.isDragging) {
       classNames.push('dragged-out')
-    } else if (this.props.activeSegment === this.props.dataNo) {
+    } else if (this.props.activeSegment === this.props.sliceIndex) {
       classNames.push('hover', 'show-drag-handles')
     }
 
@@ -349,11 +336,17 @@ export class Segment extends React.Component {
       }
     }
 
+    // These refs are a workaround for CSSTransition's dependence on
+    // findDOMNode, which is deprecated.
+    const newRef = React.createRef()
+    const oldRef = React.createRef()
+
     return (
       <div
         style={segmentStyle}
         className={classNames.join(' ')}
         data-testid="segment"
+        data-slice-index={this.props.sliceIndex}
         ref={(ref) => {
           this.streetSegment = ref
         }}
@@ -376,8 +369,9 @@ export class Segment extends React.Component {
           timeout={250}
           onExited={this.handleSwitchSegments}
           unmountOnExit={true}
+          nodeRef={oldRef}
         >
-          {this.renderSegmentCanvas('old')}
+          {this.renderSegmentCanvas('old', oldRef)}
         </CSSTransition>
         <CSSTransition
           key="new-variant"
@@ -385,8 +379,9 @@ export class Segment extends React.Component {
           classNames="switching-in"
           timeout={250}
           unmountOnExit={true}
+          nodeRef={newRef}
         >
-          {this.renderSegmentCanvas('new')}
+          {this.renderSegmentCanvas('new', newRef)}
         </CSSTransition>
         <div className="hover-bk" />
       </div>
