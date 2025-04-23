@@ -90,14 +90,15 @@ export const setCapacitySource = (source) => {
 }
 
 export const incrementSegmentWidth = (
-  segmentIndex,
+  sliceIndex,
   add,
   precise,
-  origWidth,
   resizeType = RESIZE_TYPE_INCREMENT
 ) => {
   return async (dispatch, getState) => {
     const units = getState().street.units
+    const origWidth = getState().street.segments[sliceIndex].width
+
     let resolution
 
     if (precise) {
@@ -131,7 +132,7 @@ export const incrementSegmentWidth = (
     }
 
     cancelSegmentResizeTransitions()
-    await dispatch(changeSegmentWidth(segmentIndex, width))
+    await dispatch(changeSegmentWidth(sliceIndex, width))
     await dispatch(segmentsChanged())
   }
 }
@@ -145,20 +146,20 @@ const createStreetFromResponse = (response) => {
   street.location = response.data.street.location || null
   street.editCount = response.data.street.editCount || 0
   street.segments = street.segments.map((segment) => {
-    segment.warnings = []
+    segment.warnings = [false]
     segment.variant = getVariantArray(segment.type, segment.variantString)
     return segment
   })
 
   return street
 }
+
+// Currently not being used but could replace fetchLastStreet in xhr.js
 export const getLastStreet = () => {
   return async (dispatch, getState) => {
     const lastStreetId = getState().app.priorLastStreetId
     const { id, namespacedId } = getState().street
     try {
-      // check this later
-      // eslint-disable-next-line import/no-named-as-default-member
       const response = await apiClient.getStreet(lastStreetId)
       const data = response.data
       const street = createStreetFromResponse(data)

@@ -13,7 +13,7 @@ exports[`StreetMeta > renders without crashing 1`] = `
         aria-haspopup="menu"
         aria-label="Change width of the street"
         data-state="closed"
-        id="radix-:r0:"
+        id="radix-«r0»"
         type="button"
       >
         <div

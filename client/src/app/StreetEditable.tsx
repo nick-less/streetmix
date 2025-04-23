@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, createRef, cloneElement } from 'react'
 import { useDrop } from 'react-dnd'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 import { useSelector } from '~/src/store/hooks'
 import { usePrevious } from '~/src/util/usePrevious'
+import type { DraggingState } from '~/src/types'
 import Segment from '../segments/Segment'
 import {
   TILE_SIZE,
@@ -12,15 +13,44 @@ import {
 } from '../segments/constants'
 import { cancelSegmentResizeTransitions } from '../segments/resizing'
 import {
-  makeSpaceBetweenSegments,
   isSegmentWithinCanvas,
   createStreetDropTargetSpec
 } from '../segments/drag_and_drop'
 
+/**
+ * Calculates the gap shown before or after slices while dragging another slice
+ */
+function makeSpaceBetweenSlices (
+  sliceIndex: number,
+  draggingState: DraggingState
+): number {
+  const { segmentBeforeEl, segmentAfterEl } = draggingState
+
+  let gap = 0
+
+  if (segmentBeforeEl !== undefined && sliceIndex >= segmentBeforeEl) {
+    gap += DRAGGING_MOVE_HOLE_WIDTH
+
+    if (segmentAfterEl === undefined) {
+      gap += DRAGGING_MOVE_HOLE_WIDTH
+    }
+  }
+
+  if (segmentAfterEl !== undefined && sliceIndex > segmentAfterEl) {
+    gap += DRAGGING_MOVE_HOLE_WIDTH
+
+    if (segmentBeforeEl === undefined) {
+      gap += DRAGGING_MOVE_HOLE_WIDTH
+    }
+  }
+
+  return gap
+}
+
 interface StreetEditableProps {
   resizeType?: number
-  setBuildingWidth: (node: React.ReactElement) => void
-  updatePerspective: (node: React.ReactElement) => void
+  setBuildingWidth: (node: HTMLDivElement | null) => void
+  updatePerspective: (el: HTMLDivElement) => void
   draggingType?: number
 }
 
@@ -48,26 +78,26 @@ function StreetEditable (props: StreetEditableProps): React.ReactElement {
   })
 
   // Set up drop target
+  const dropTargetSpec = createStreetDropTargetSpec(
+    street,
+    streetSectionEditable
+  )
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [collectedProps, drop] = useDrop(() => createStreetDropTargetSpec())
+  const [collectedProps, drop] = useDrop(dropTargetSpec)
 
   useEffect(() => {
-    const dragEvents = ['dragover', 'touchmove']
     if (!prevProps?.draggingState && draggingState) {
-      dragEvents.forEach((type) => {
-        window.addEventListener(type, updateWithinCanvas)
-      })
+      window.addEventListener('dragover', updateWithinCanvas)
+      window.addEventListener('touchmove', updateWithinCanvas)
     } else if (prevProps?.draggingState && !draggingState) {
-      dragEvents.forEach((type) => {
-        window.removeEventListener(type, updateWithinCanvas)
-      })
+      window.removeEventListener('dragover', updateWithinCanvas)
+      window.removeEventListener('touchmove', updateWithinCanvas)
     }
 
     // Cleanup
     return () => {
-      dragEvents.forEach((type) => {
-        window.removeEventListener(type, updateWithinCanvas)
-      })
+      window.removeEventListener('dragover', updateWithinCanvas)
+      window.removeEventListener('touchmove', updateWithinCanvas)
     }
   }, [draggingState])
 
@@ -91,11 +121,8 @@ function StreetEditable (props: StreetEditableProps): React.ReactElement {
     }
   }, [street.id, street.width])
 
-  function updateWithinCanvas (event): void {
-    const newValue = isSegmentWithinCanvas(
-      event,
-      streetSectionEditable.current
-    )
+  function updateWithinCanvas (event: MouseEvent | TouchEvent): void {
+    const newValue = isSegmentWithinCanvas(event, streetSectionEditable.current)
 
     if (newValue) {
       document.body.classList.remove('not-within-canvas')
@@ -143,18 +170,15 @@ function StreetEditable (props: StreetEditableProps): React.ReactElement {
 
     if (draggingState && withinCanvas.current) {
       mainLeft -= DRAGGING_MOVE_HOLE_WIDTH
-      const spaceBetweenSegments = makeSpaceBetweenSegments(
-        sliceIndex,
-        draggingState
-      )
-      return mainLeft + currPos + spaceBetweenSegments
+      const gap = makeSpaceBetweenSlices(sliceIndex, draggingState)
+      return mainLeft + currPos + gap
     } else {
       return mainLeft + currPos
     }
   }
 
   function onExitAnimations (child: React.ReactElement): React.ReactElement {
-    return React.cloneElement(child, {
+    return cloneElement(child, {
       exit: !street.immediateRemoval
     })
   }
@@ -167,20 +191,20 @@ function StreetEditable (props: StreetEditableProps): React.ReactElement {
       const segmentLeft = calculateSlicePosition(i)
       const key = `${streetId}.${segment.id}`
       // Refs are created with createRef and then stored in parent `refs`
-      const ref = React.createRef<HTMLDivElement>()
+      const ref = createRef<HTMLDivElement>()
       childRefs.current[key] = ref
 
       const segmentEl = (
         <CSSTransition
           key={key}
           timeout={250}
-          classNames="switching-away"
+          classNames="slice-remove"
           exit={!immediateRemoval}
           onExit={() => {
             if (ref.current === null) return
             handleSwitchSliceAway(ref.current, i)
           }}
-          unmountOnExit={true}
+          unmountOnExit
           nodeRef={ref}
         >
           {/* This wrapper element is a workaround for CSSTransition depending on
@@ -190,10 +214,8 @@ function StreetEditable (props: StreetEditableProps): React.ReactElement {
             <Segment
               sliceIndex={i}
               segment={{ ...segment }}
-              actualWidth={segment.width}
               units={units}
               segmentLeft={segmentLeft}
-              updatePerspective={updatePerspective}
             />
           </div>
         </CSSTransition>

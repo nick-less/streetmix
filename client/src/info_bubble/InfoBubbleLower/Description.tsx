@@ -4,18 +4,15 @@ import { useSelector, useDispatch } from '~/src/store/hooks'
 import { getSegmentInfo, getSegmentVariantInfo } from '~/src/segments/info'
 import { registerKeypress, deregisterKeypress } from '~/src/app/keypress'
 import { formatMessage } from '~/src/locales/locale'
-import {
-  showDescription,
-  hideDescription
-} from '~/src/store/slices/infoBubble'
+import { showDescription, hideDescription } from '~/src/store/slices/infoBubble'
 import DescriptionPanel from './DescriptionPanel'
 
-import type { SegmentDescription } from '@streetmix/types'
+import type { SliceDescription } from '@streetmix/types'
 
 function getDescriptionData (
   type: string,
   variantString: string
-): SegmentDescription | undefined {
+): SliceDescription | undefined {
   const segmentInfo = getSegmentInfo(type)
   const variantInfo = getSegmentVariantInfo(type, variantString)
 

@@ -1,12 +1,28 @@
-import SEGMENT_LOOKUP from './segment-lookup.json'
+import SEGMENT_LOOKUP_SOURCE from './segment-lookup.json'
 import {
-  getSegmentLookup,
+  // getSegmentLookup,
   applySegmentInfoOverridesAndRules,
   getSegmentComponentInfo,
   getSegmentSprites,
   COMPONENT_GROUPS
 } from './segment-dict'
-import SPRITE_DEFS from './sprite-defs.json'
+import SPRITE_DEFS from './sprite_defs.yaml'
+import type {
+  SegmentLookup,
+  SegmentDefinition,
+  VariantInfo,
+  UnknownSegmentDefinition,
+  UnknownVariantInfo,
+  SliceVariantDetails,
+  SpriteDefinition
+} from '@streetmix/types'
+
+// Re-assign to a variable and assign type
+// TODO: Use something like zod to help with this
+const SEGMENT_LOOKUP: Record<string, SegmentDefinition> =
+  createAllSegmentDefinitions(
+    SEGMENT_LOOKUP_SOURCE as Record<string, SegmentLookup>
+  )
 
 /**
  * Defines the meta-category of each segment, similar to "typechecking"
@@ -33,8 +49,9 @@ export const SegmentTypes = {
  * receivers of this object can tell the difference between a placeholder
  * and normal segment / variant data.
  */
-export const SEGMENT_UNKNOWN = {
+export const SEGMENT_UNKNOWN: UnknownSegmentDefinition = {
   unknown: true,
+  id: 'unknown',
   name: 'Unknown',
   owner: 'NONE',
   zIndex: 1,
@@ -42,7 +59,7 @@ export const SEGMENT_UNKNOWN = {
   details: {}
 }
 
-export const SEGMENT_UNKNOWN_VARIANT = {
+export const SEGMENT_UNKNOWN_VARIANT: UnknownVariantInfo = {
   unknown: true,
   name: 'Unknown',
   graphics: {
@@ -50,56 +67,76 @@ export const SEGMENT_UNKNOWN_VARIANT = {
   }
 }
 
-/**
- * Returns all segment data.
- *
- * @returns {Object}
- */
-export function getAllSegmentInfo () {
-  return SEGMENT_LOOKUP
+function createAllSegmentDefinitions (
+  source: Record<string, SegmentLookup>
+): Record<string, SegmentDefinition> {
+  const obj: Record<string, SegmentDefinition> = {}
+  for (const key in source) {
+    obj[key] = createSegmentDefinition([key, source[key]])
+  }
+  return obj
+}
+
+function createSegmentDefinition ([key, obj]: [
+  key: string,
+  obj: SegmentLookup
+]): SegmentDefinition {
+  const segment: SegmentDefinition = {
+    id: key,
+    ...obj
+  }
+  return segment
 }
 
 /**
  * Returns all segment data as an array.
  * Object keys are converted to an `id` property for each segment.
- *
- * @returns {SegmentDefinition[]}
  */
-export function getAllSegmentInfoArray () {
-  return Object.keys(SEGMENT_LOOKUP).map((id) => {
-    const segment = { ...SEGMENT_LOOKUP[id] }
-    segment.id = id
-    return segment
-  })
+export function getAllSegmentInfo (): SegmentDefinition[] {
+  return Object.entries(
+    SEGMENT_LOOKUP_SOURCE as Record<string, SegmentLookup>
+  ).map(createSegmentDefinition)
 }
 
 /**
  * Gets segment data for segment `type`. Safer than reading `type` directly
- * from `SEGMENT_INFO`, because this will return the `SEGMENT_UNKNOWN`
+ * from `SEGMENT_LOOKUP`, because this will return the `SEGMENT_UNKNOWN`
  * placeholder if the type is not found. The unknown segment placeholder
  * allows means bad data, experimental segments, etc. won't break rendering.
- *
- * @param {string} type
- * @returns {SegmentDefinition}
  */
-export function getSegmentInfo (type) {
-  return SEGMENT_LOOKUP[type] || SEGMENT_UNKNOWN
+export function getSegmentInfo (
+  type: string
+): SegmentDefinition | UnknownSegmentDefinition {
+  return SEGMENT_LOOKUP[type] ?? SEGMENT_UNKNOWN
+}
+
+/**
+ * Retrieves the necessary information required to map the old segment data
+ * model to the new segment data model for the specific segment using the
+ * segment's `type` and `variant`.
+ */
+// NOTE: ported from segment-dict.js so we can more easily assign types to it here
+function getSegmentLookup (
+  type: string,
+  variant: string
+): SliceVariantDetails | undefined {
+  // Returns `undefined` if not found.
+  return getSegmentInfo(type).details?.[variant]
 }
 
 /**
  * Maps the old segment data model to the new segment data model and returns
  * the graphic sprites necessary to render the segment as well as any rules
  * to follow, e.g. `minWidth` based on the `type` and `variant`.
- *
- * @param {string} type
- * @param {string} variant
- * @returns {VariantInfo} variantInfo - returns an object in the shape of { graphics, ...rules }
  */
-export function getSegmentVariantInfo (type, variant) {
+export function getSegmentVariantInfo (
+  type: string,
+  variant: string
+): VariantInfo | UnknownVariantInfo {
   const segmentLookup = getSegmentLookup(type, variant)
   const { rules } = getSegmentInfo(type)
 
-  if (!segmentLookup || !segmentLookup.components) {
+  if (segmentLookup?.components === undefined) {
     return SEGMENT_UNKNOWN_VARIANT
   }
 
@@ -123,22 +160,25 @@ export function getSegmentVariantInfo (type, variant) {
  *
  * Alternatively, provide an object containing an `id` property and any number
  * of properties to override the original definition.
- *
- * If the sprite is NOT defined in SPRITE_DEFS (which we increasingly no longer
- * need to do because of changes in our segment / component definition structure),
- * return a minimal placeholder object.
- *
- * @param {string|Object} id
- * @return {Object}
  */
-export function getSpriteDef (sprite) {
+export function getSpriteDef (
+  sprite: string | SpriteDefinition
+): SpriteDefinition {
   let def
-  if (typeof sprite === 'object' && sprite.id) {
-    def = { ...(SPRITE_DEFS[sprite.id] || { id: sprite.id }), ...sprite }
+
+  if (typeof sprite === 'object') {
+    def = {
+      ...SPRITE_DEFS[sprite.id],
+      ...sprite
+    }
   } else {
     // Clone the original to prevent downstream consumers from accidentally
-    // modifying the reference
-    def = { ...(SPRITE_DEFS[sprite] || { id: sprite }) }
+    // modifying the reference. If there is no original sprite def, return a
+    // minimal placeholder object with just its ID.
+    def = {
+      ...(SPRITE_DEFS[sprite] ?? { id: sprite })
+    }
   }
+
   return def
 }

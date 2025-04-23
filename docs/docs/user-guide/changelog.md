@@ -5,6 +5,26 @@ sidebar_position: 5
 
 # What's new in Streetmix?
 
+## April 23, 2025
+
+### ✨ New features
+
+- **Export to Streetmeter!** We've partnered with [Streetmeter](https://streetmeter.net/) to export your Streetmix street into their new analysis tool, where you can dive into a more thorough evaluation of your street's performance!
+- **Cycletracks for everyone.** This is a new old feature! A few years ago we released two-way cycletracks for Streetmix+ members, sponsored by our friends at ITDP Africa. Today we're making these available for all signed-in users!
+
+### 🎮 UI improvements
+
+- **A redesigned "new street" menu.** It's now a dropdown where you can select what kind of new street you want.
+- Improved keyboard navigation across menus.
+
+### 🐛 Bug fixes
+
+- Fixed a bug where completely deleting a street name would not unname it.
+
+### 🐞 New bugs 😳
+
+- Some interaction functionality is being reworked, which has resulted in some known issues that have not yet been resolved. Keyboard shortcuts for resizing and deleting section elements may not correctly target the one under the mouse pointer.
+
 ## March 28, 2025
 
 ### 🐛 Bug fixes
