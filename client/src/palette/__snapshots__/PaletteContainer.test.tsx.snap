@@ -13,7 +13,6 @@ exports[`PaletteContainer > renders 1`] = `
       >
         <button
           class="btn"
-          title="Environment editor"
           type="button"
         >
           <svg
@@ -44,39 +43,25 @@ exports[`PaletteContainer > renders 1`] = `
             <li
               class="palette-item"
             >
-              <div
-                tabindex="0"
-              >
+              <button>
                 <img
                   class="palette-item-image"
                   draggable="false"
                 />
-              </div>
-              <img
-                alt=""
-                src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
-                style="display: none;"
-              />
+              </button>
             </li>
             <li
               class="palette-item palette-item-disabled"
             >
-              <div
-                tabindex="0"
-              >
+              <button>
                 <img
                   class="palette-item-image"
                   draggable="false"
                 />
-              </div>
+              </button>
               <svg
                 data-icon="lock"
                 data-icon-source="test"
-              />
-              <img
-                alt=""
-                src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
-                style="display: none;"
               />
             </li>
           </ul>
@@ -99,8 +84,8 @@ exports[`PaletteContainer > renders 1`] = `
       >
         <button
           class="btn"
+          data-testid="undo"
           disabled=""
-          title="Undo"
           type="button"
         >
           <svg
@@ -110,8 +95,8 @@ exports[`PaletteContainer > renders 1`] = `
         </button>
         <button
           class="btn"
+          data-testid="redo"
           disabled=""
-          title="Redo"
           type="button"
         >
           <svg

@@ -11,7 +11,7 @@
 
 .main-screen {
   position: relative;
-  z-index: var(--z-01-main-screen);
+  z-index: var(--z-00-main-screen);
   flex-grow: 1;
 
   body:not(.safari) & {
@@ -191,4 +191,10 @@ body.phone #loading {
     left: 0;
     top: 0;
   }
+}
+
+/* Ensure floating-ui elements appear above everything else */
+[data-floating-ui-portal] {
+  position: absolute;
+  z-index: var(--z-09-floating-ui);
 }
