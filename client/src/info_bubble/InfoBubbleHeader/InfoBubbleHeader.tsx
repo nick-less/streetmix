@@ -2,7 +2,7 @@ import React from 'react'
 import { IntlProvider, FormattedMessage } from 'react-intl'
 
 import { useSelector } from '~/src/store/hooks'
-import { BUILDINGS } from '~/src/segments/buildings'
+import { getBoundaryItem } from '~/src/boundary'
 import { getSegmentInfo, getSegmentVariantInfo } from '~/src/segments/info'
 
 import {
@@ -13,11 +13,11 @@ import {
 import EditableLabel from './EditableLabel'
 import RemoveButton from './RemoveButton'
 
-import type { BuildingPosition, Segment } from '@streetmix/types'
+import type { BoundaryPosition, Segment } from '@streetmix/types'
 
 interface InfoBubbleHeaderProps {
   type: number
-  position: number | BuildingPosition
+  position: number | BoundaryPosition
 }
 
 function InfoBubbleHeader (props: InfoBubbleHeaderProps): React.ReactElement {
@@ -58,23 +58,23 @@ function InfoBubbleHeader (props: InfoBubbleHeaderProps): React.ReactElement {
           const key = variantInfo.nameKey ?? segmentInfo.nameKey
 
           id = `segments.${key}`
-          defaultMessage = variantInfo.name ?? segmentInfo.name
+          defaultMessage = variantInfo.name ?? segmentInfo.name ?? ''
         }
         break
       }
       case INFO_BUBBLE_TYPE_LEFT_BUILDING: {
-        const key = street.leftBuildingVariant
+        const key = street.boundary.left.variant
 
         id = `buildings.${key}.name`
-        defaultMessage = BUILDINGS[key as keyof typeof BUILDINGS].label
+        defaultMessage = getBoundaryItem(key).label
 
         break
       }
       case INFO_BUBBLE_TYPE_RIGHT_BUILDING: {
-        const key = street.rightBuildingVariant
+        const key = street.boundary.right.variant
 
         id = `buildings.${key}.name`
-        defaultMessage = BUILDINGS[key as keyof typeof BUILDINGS].label
+        defaultMessage = getBoundaryItem(key).label
 
         break
       }

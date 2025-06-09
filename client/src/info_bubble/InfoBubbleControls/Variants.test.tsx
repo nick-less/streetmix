@@ -18,15 +18,22 @@ import type { SegmentDefinition } from '@streetmix/types'
 vi.mock('../../segments/info')
 
 // Provide mock variant icons so that we can test icons with `enabledWithFlag`
-vi.mock('../../segments/variant_icons.json', () => ({
-  default: require('../../segments/__mocks__/variant_icons.json')
-}))
+vi.mock(
+  '../../segments/variant_icons.yaml',
+  async () => await import('../../segments/__mocks__/variant_icons.yaml')
+)
 
 describe('Variants', () => {
   const initialState = {
     street: {
-      leftBuildingVariant: 'residential',
-      rightBuildingVariant: 'residential',
+      boundary: {
+        left: {
+          variant: 'residential'
+        },
+        right: {
+          variant: 'residential'
+        }
+      },
       segments: [
         {
           variant: {
@@ -84,7 +91,7 @@ describe('Variants', () => {
       )
 
       await userEvent.click(screen.getByTitle('Waterfront'))
-      expect(store.getState().street.leftBuildingVariant).toBe('waterfront')
+      expect(store.getState().street.boundary.left.variant).toBe('waterfront')
     })
 
     it('handles switching right building', async () => {
@@ -94,7 +101,7 @@ describe('Variants', () => {
       )
 
       await userEvent.click(screen.getByTitle('Waterfront'))
-      expect(store.getState().street.rightBuildingVariant).toBe('waterfront')
+      expect(store.getState().street.boundary.right.variant).toBe('waterfront')
     })
   })
 

@@ -7,7 +7,7 @@ import {
   removeBuildingFloor,
   setBuildingFloorValue
 } from '~/src/store/slices/street'
-import { BUILDINGS, prettifyHeight } from '~/src/segments/buildings'
+import { getBoundaryItem, prettifyHeight } from '~/src/boundary'
 import {
   MAX_BUILDING_HEIGHT,
   BUILDING_LEFT_POSITION
@@ -15,10 +15,10 @@ import {
 import UpDownInput from './UpDownInput'
 import './BuildingHeightControl.css'
 
-import type { BuildingPosition } from '@streetmix/types'
+import type { BoundaryPosition } from '@streetmix/types'
 
 interface BuildingHeightControlProps {
-  position: BuildingPosition
+  position: BoundaryPosition
 }
 
 function BuildingHeightControl ({
@@ -29,13 +29,13 @@ function BuildingHeightControl ({
   // Get the appropriate building data based on which side of street it's on
   const variant = useSelector((state) =>
     position === BUILDING_LEFT_POSITION
-      ? state.street.leftBuildingVariant
-      : state.street.rightBuildingVariant
+      ? state.street.boundary.left.variant
+      : state.street.boundary.right.variant
   )
   const value = useSelector((state) =>
     position === BUILDING_LEFT_POSITION
-      ? state.street.leftBuildingHeight
-      : state.street.rightBuildingHeight
+      ? state.street.boundary.left.floors
+      : state.street.boundary.right.floors
   )
 
   const dispatch = useDispatch()
@@ -59,7 +59,7 @@ function BuildingHeightControl ({
     return prettifyHeight(variant, position, value, units, intl.formatMessage)
   }
 
-  const hasFloors = BUILDINGS[variant as keyof typeof BUILDINGS].hasFloors
+  const hasFloors = getBoundaryItem(variant).hasFloors
 
   return (
     <div className="non-variant building-height">

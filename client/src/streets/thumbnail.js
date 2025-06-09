@@ -3,10 +3,10 @@ import { drawLine } from '../util/canvas_drawing'
 import { prettifyWidth } from '../util/width_units'
 import { getSkyboxDef, makeCanvasGradientStopArray } from '../sky'
 import {
-  BUILDINGS,
-  GROUND_BASELINE_HEIGHT,
-  drawBuilding
-} from '../segments/buildings'
+  getBoundaryItem,
+  drawBoundary,
+  GROUND_BASELINE_HEIGHT
+} from '../boundary'
 import { getSegmentInfo, getSegmentVariantInfo } from '../segments/info'
 import { TILE_SIZE } from '../segments/constants'
 import {
@@ -321,7 +321,7 @@ function drawGround (
  * @param {Number} buildingOffsetLeft
  * @modifies {CanvasRenderingContext2D} ctx
  */
-function drawBuildings (
+function drawBoundaries (
   ctx,
   street,
   width,
@@ -334,15 +334,20 @@ function drawBuildings (
 
   // Left building
   const x1 = width / 2 - (street.width * TILE_SIZE * multiplier) / 2
-  const leftBuilding = BUILDINGS[street.leftBuildingVariant]
+  // Keep deprecated properties here because gallery streets are transmitted
+  // without updating schemas
+  const leftVariant =
+    street.boundary?.left.variant ?? street.leftBuildingVariant
+  const leftFloors = street.boundary?.left.floors ?? street.leftBuildingHeight
+  const leftBuilding = getBoundaryItem(leftVariant)
   const leftOverhang =
     typeof leftBuilding.overhangWidth === 'number'
       ? leftBuilding.overhangWidth
       : 0
-  drawBuilding(
+  drawBoundary(
     ctx,
-    street.leftBuildingVariant,
-    street.leftBuildingHeight,
+    leftVariant,
+    leftFloors,
     'left',
     buildingWidth,
     groundLevel,
@@ -353,15 +358,21 @@ function drawBuildings (
 
   // Right building
   const x2 = width / 2 + (street.width * TILE_SIZE * multiplier) / 2
-  const rightBuilding = BUILDINGS[street.rightBuildingVariant]
+  // Keep deprecated properties here because gallery streets are transmitted
+  // without updating schemas
+  const rightVariant =
+    street.boundary?.right.variant ?? street.rightBuildingVariant
+  const rightFloors =
+    street.boundary?.right.floors ?? street.rightBuildingHeight
+  const rightBuilding = getBoundaryItem(rightVariant)
   const rightOverhang =
     typeof rightBuilding.overhangWidth === 'number'
       ? rightBuilding.overhangWidth
       : 0
-  drawBuilding(
+  drawBoundary(
     ctx,
-    street.rightBuildingVariant,
-    street.rightBuildingHeight,
+    rightVariant,
+    rightFloors,
     'right',
     buildingWidth,
     groundLevel,
@@ -759,7 +770,7 @@ export function drawStreetThumbnail (
   drawGround(ctx, street, width, dpi, multiplier, horizonLine, groundLevel)
 
   // Buildings
-  drawBuildings(
+  drawBoundaries(
     ctx,
     street,
     width,

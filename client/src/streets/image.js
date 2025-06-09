@@ -1,4 +1,4 @@
-import { getBuildingImageHeight } from '../segments/buildings'
+import { getBoundaryImageHeight } from '../boundary'
 import { TILE_SIZE, BUILDING_SPACE } from '../segments/constants'
 import { deleteStreetImage } from '../util/api'
 import store, { observeStore } from '../store'
@@ -26,15 +26,15 @@ export function getStreetImage (
 ) {
   const width = TILE_SIZE * street.width + BUILDING_SPACE * 2
 
-  const leftHeight = getBuildingImageHeight(
-    street.leftBuildingVariant,
+  const leftHeight = getBoundaryImageHeight(
+    street.boundary.left.variant,
     'left',
-    street.leftBuildingHeight
+    street.boundary.left.floors
   )
-  const rightHeight = getBuildingImageHeight(
-    street.rightBuildingVariant,
+  const rightHeight = getBoundaryImageHeight(
+    street.boundary.right.variant,
     'right',
-    street.rightBuildingHeight
+    street.boundary.right.floors
   )
 
   let height = Math.max(leftHeight, rightHeight)
