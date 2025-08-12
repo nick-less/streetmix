@@ -3,16 +3,17 @@ import { IntlProvider } from 'react-intl'
 import { DirectionProvider, type Direction } from '@radix-ui/react-direction'
 import { DndProvider } from 'react-dnd-multi-backend'
 import { HTML5toTouch } from 'rdndmb-html5-to-touch'
+import { FloatingTree } from '@floating-ui/react'
 
+import { FloodControls } from '~/src/plugins/coastmix'
 import MenusContainer from '../menubar/MenusContainer'
 import StreetNameplateContainer from '../streets/StreetNameplateContainer'
-import InfoBubble from '../info_bubble/InfoBubble'
+import DescriptionPanel from '../info_bubble/DescriptionPanel'
 import PaletteContainer from '../palette/PaletteContainer'
 import DialogRoot from '../dialogs/DialogRoot'
 import SkyPicker from '../sky/SkyPicker'
 import Gallery from '../gallery/Gallery'
 import SegmentDragLayer from '../segments/SegmentDragLayer'
-import DebugHoverPolygon from '../info_bubble/DebugHoverPolygon'
 import ToastContainer from '../ui/Toasts'
 import SentimentSurveyContainer from '../sentiment/SentimentSurveyContainer'
 import { useSelector } from '../store/hooks'
@@ -56,39 +57,41 @@ function App (): React.ReactElement {
     <>
       <Loading isLoading={isLoading || !everythingLoaded} />
       {!isLoading && everythingLoaded && (
-        <DirectionProvider dir={dir}>
-          <IntlProvider
-            locale={locale.locale}
-            key={locale.locale}
-            messages={locale.messages}
-          >
-            {/* The prop context={window} prevents crash errors with hot-module reloading */}
-            <DndProvider options={HTML5toTouch} context={window}>
-              {/* DndProvider allows multiple children; IntlProvider does not */}
-              <NotificationBar />
-              <BlockingShield />
-              <BlockingError />
-              <Gallery />
-              <DialogRoot />
-              <DebugInfo />
-              <PrintContainer />
-              <div className="main-screen">
-                <MenusContainer />
-                <StreetNameplateContainer />
-                <InfoBubble />
-                <DebugHoverPolygon />
-                <WelcomePanel />
-                <PaletteContainer />
-                <SkyPicker />
-                <SegmentDragLayer />
-                <StreetView />
-                <ToastContainer />
-                <SentimentSurveyContainer />
-              </div>
-              <SponsorBanner />
-            </DndProvider>
-          </IntlProvider>
-        </DirectionProvider>
+        <FloatingTree>
+          <DirectionProvider dir={dir}>
+            <IntlProvider
+              locale={locale.locale}
+              key={locale.locale}
+              messages={locale.messages}
+            >
+              {/* The prop context={window} prevents crash errors with hot-module reloading */}
+              <DndProvider options={HTML5toTouch} context={window}>
+                {/* DndProvider allows multiple children; IntlProvider does not */}
+                <NotificationBar />
+                <BlockingShield />
+                <BlockingError />
+                <Gallery />
+                <DialogRoot />
+                <DebugInfo />
+                <PrintContainer />
+                <div className="main-screen">
+                  <MenusContainer />
+                  <StreetNameplateContainer />
+                  <DescriptionPanel />
+                  <FloodControls />
+                  <WelcomePanel />
+                  <PaletteContainer />
+                  <SkyPicker />
+                  <SegmentDragLayer />
+                  <StreetView />
+                  <ToastContainer />
+                  <SentimentSurveyContainer />
+                </div>
+                <SponsorBanner />
+              </DndProvider>
+            </IntlProvider>
+          </DirectionProvider>
+        </FloatingTree>
       )}
     </>
   )
