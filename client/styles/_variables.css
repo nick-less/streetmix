@@ -5,7 +5,7 @@
 :root {
   /* Dimensions */
   --tile-size: 12px;
-  --canvas-height: 500px;
+  --canvas-height: 600px;
 
   /* Baseline is variable depending on screen height, up to a maximum of 400px
      a minimum of 190px */
@@ -18,7 +18,6 @@
   );
   --street-section-min-baseline: 190px;
   --street-section-max-baseline: 400px;
-  --street-section-scroll-hide: -20px;
   --gallery-height: 180px;
   --left-right-inset: 50px;
   --menu-side-inset: calc(var(--left-right-inset) - 20px);
@@ -88,7 +87,7 @@
   --warning-color: rgb(220 20 20);
   --segment-text: rgb(40 35 30);
   --segment-active-background: rgb(255 255 255 / 20%);
-  --info-bubble-background: white; /* TODO: rename */
+  --popup-background: white; /* TODO: rename */
 
   /* Link and button text */
   --interactive-text-color: var(--color-turquoise-700);
@@ -195,7 +194,7 @@
   --z-03-gallery-message: var(--z-index-03);
   --z-04-drag-layer: var(--z-index-04);
   --z-05-welcome: var(--z-index-05);
-  --z-06-info-bubble: var(--z-index-06);
+  --z-06-popup: var(--z-index-06);
   --z-06-drag-handle: var(--z-index-06);
   --z-07-street-scroll: var(--z-index-07);
   --z-07-toasts: var(--z-index-07);
