@@ -1,15 +1,12 @@
 import { drawGround } from '@streetmix/export-image/src/ground'
+import { drawLine } from '@streetmix/export-image/src/labels'
+
 import { images } from '../app/load_resources'
-import { drawLine } from '../util/canvas_drawing'
 import { prettifyWidth } from '../util/width_units'
 import { getSkyboxDef, makeCanvasGradientStopArray } from '../sky'
-import {
-  getBoundaryItem,
-  drawBoundary,
-  GROUND_BASELINE_HEIGHT
-} from '../boundary'
+import { getBoundaryItem, drawBoundary } from '../boundary'
 import { getSegmentInfo, getSegmentVariantInfo } from '../segments/info'
-import { TILE_SIZE } from '../segments/constants'
+import { GROUND_BASELINE_HEIGHT, TILE_SIZE } from '../segments/constants'
 import {
   getVariantInfoDimensions,
   drawSegmentContents,
@@ -441,6 +438,7 @@ function drawSegmentNamesBackground (
  * @param {Number} multiplier - scale factor of image
  * @param {Number} groundLevel - vertical height of ground
  * @param {Number} offsetLeft - left position to start from
+ * @param {Number} locale - locale to render labels in
  * @modifies {CanvasRenderingContext2D} ctx
  */
 function drawSegmentNamesAndWidths (
@@ -449,7 +447,8 @@ function drawSegmentNamesAndWidths (
   dpi,
   multiplier,
   groundLevel,
-  offsetLeft
+  offsetLeft,
+  locale
 ) {
   ctx.save()
 
@@ -485,7 +484,7 @@ function drawSegmentNamesAndWidths (
     const x = (offsetLeft + availableWidth / 2) * dpi
 
     // Width label
-    const text = prettifyWidth(segment.width, street.units)
+    const text = prettifyWidth(segment.width, street.units, locale)
     ctx.fillText(text, x, (groundLevel + 60 * multiplier) * dpi)
 
     // Segment name label
@@ -694,7 +693,8 @@ export function drawStreetThumbnail (
     transparentSky,
     segmentNamesAndWidths,
     streetName,
-    watermark = true
+    watermark = true,
+    locale = 'en'
   }
 ) {
   // Calculations
@@ -761,7 +761,8 @@ export function drawStreetThumbnail (
       dpi,
       multiplier,
       groundLevel,
-      offsetLeft
+      offsetLeft,
+      locale
     )
   }
 

@@ -7,6 +7,7 @@ import {
   resolutionForResizeType,
   RESIZE_TYPE_INITIAL
 } from '../segments/resizing'
+import { getElevationValue } from '../segments/elevation'
 import { getVariantString } from '../segments/variant_utils'
 import { getSignInData, isSignedIn } from '../users/authentication'
 import { SETTINGS_UNITS_IMPERIAL } from '../users/constants'
@@ -37,7 +38,7 @@ import type {
 const ROUGH_CONVERSION_RATE = (10 / 3) * 0.3048
 
 // Server is now the source of truth of this value
-const LATEST_SCHEMA_VERSION = 32
+const LATEST_SCHEMA_VERSION = 33
 
 function processTemplateSlices (
   slices: SliceItemTemplate[],
@@ -105,7 +106,7 @@ function processTemplateSlices (
       slice.width = getWidthInMetric(sliceTemplate.width, units)
     }
 
-    slice.elevation = variantInfo.elevation ?? 0
+    slice.elevation = getElevationValue(variantInfo.elevation, units)
 
     processed.push(slice)
   }
@@ -117,12 +118,51 @@ function processTemplateSlices (
   return processed
 }
 
+function processTemplateBoundaries (
+  boundary: StreetTemplate['boundary'],
+  units: UnitsSetting
+): StreetTemplate['boundary'] {
+  const processed = {
+    left: {
+      ...boundary.left
+    },
+    right: {
+      ...boundary.right
+    }
+  }
+
+  // Create boundary ids
+  processed.left.id = nanoid()
+  processed.right.id = nanoid()
+
+  // Set default boundary elevation according to units setting
+  if (typeof processed.left.elevation !== 'number') {
+    processed.left.elevation = getWidthInMetric(processed.left.elevation, units)
+  }
+  if (typeof processed.right.elevation !== 'number') {
+    processed.right.elevation = getWidthInMetric(
+      processed.right.elevation,
+      units
+    )
+  }
+
+  return processed
+}
+
 // Exported for test only
 export function createStreetData (data: StreetTemplate, units: UnitsSetting) {
   const currentDate = new Date().toISOString()
   const slices = processTemplateSlices(data.slices, units)
+  const boundary = processTemplateBoundaries(data.boundary, units)
   const creatorId = (isSignedIn() && getSignInData().userId) ?? null
-  const street: Partial<StreetState> = {
+  const street: Omit<
+    StreetState,
+    | 'id'
+    | 'namespacedId'
+    | 'immediateRemoval'
+    | 'remainingWidth'
+    | 'occupiedWidth'
+  > = {
     units,
     location: null,
     name: null,
@@ -135,12 +175,9 @@ export function createStreetData (data: StreetTemplate, units: UnitsSetting) {
     updatedAt: currentDate,
     clientUpdatedAt: currentDate,
     creatorId,
-    ...data
+    ...data,
+    boundary
   }
-
-  // Create boundary ids
-  street.boundary.left.id = nanoid()
-  street.boundary.right.id = nanoid()
 
   // Cleanup
   delete street.slices

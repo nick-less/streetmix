@@ -8,12 +8,13 @@ import {
 } from '~/src/store/slices/street'
 import { setActiveSegment } from '~/src/store/slices/ui'
 import { usePrevious } from '~/src/util/usePrevious'
+import { GROUND_BASELINE_HEIGHT } from '~/src/segments/constants'
+import { getElevation } from '~/src/segments/view'
 import { PopupContainer } from '../info_bubble/PopupContainer'
 import {
   getBoundaryImageHeight,
   getBoundaryItem,
-  drawBoundary,
-  GROUND_BASELINE_HEIGHT
+  drawBoundary
 } from './boundary'
 import './BoundaryComponent.css'
 
@@ -47,7 +48,10 @@ function createBoundaryCanvas (
 
   // Determine canvas dimensions from physical dimensions
   const width = elementWidth + overhangWidth
-  const height = Math.min(MAX_CANVAS_HEIGHT, itemHeight)
+  const height = Math.min(
+    MAX_CANVAS_HEIGHT,
+    itemHeight + getElevation(elevation)
+  )
 
   // Create canvas
   const canvasEl = document.createElement('canvas')
@@ -257,8 +261,9 @@ function Boundary ({
       [position]: `-${width}px`,
       width: width + 'px'
     }
+    // NOTE - this still renders "higher" because of the "ground plane" on sprites
     const elevationStyle = {
-      height: `${45 + (elevation - 1) * 7}px`
+      height: `${GROUND_BASELINE_HEIGHT + getElevation(elevation)}px`
     }
 
     const classNames = ['street-section-boundary']

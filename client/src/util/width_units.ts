@@ -4,10 +4,13 @@ import {
   SETTINGS_UNITS_IMPERIAL,
   SETTINGS_UNITS_METRIC
 } from '../users/constants'
-import store from '../store'
 import { formatNumber } from './number_format'
 
-import type { UnitsSetting, WidthDefinition } from '@streetmix/types'
+import type {
+  MeasurementDefinition,
+  UnitsSetting,
+  WidthDefinition
+} from '@streetmix/types'
 
 const IMPERIAL_CONVERSION_RATE = 0.3048
 const METRIC_PRECISION = 3
@@ -109,13 +112,6 @@ export function prettifyWidth (
   locale: string
 ): string {
   let widthText = ''
-
-  // LEGACY: Not all uses of this function pass in locale.
-  // This is _not_ an optional value. After TypeScript conversion,
-  // missing this parameter throws an error.
-  if (!locale) {
-    locale = store.getState().locale.locale
-  }
 
   switch (units) {
     case SETTINGS_UNITS_IMPERIAL: {
@@ -223,7 +219,7 @@ export function convertImperialMeasurementToMetric (value: number): number {
  * imperial value to metric and return it.
  */
 export function getWidthInMetric (
-  width: WidthDefinition,
+  width: WidthDefinition | MeasurementDefinition,
   units: UnitsSetting
 ): number {
   if (units === SETTINGS_UNITS_IMPERIAL) {
@@ -237,7 +233,7 @@ export function getWidthInMetric (
  * Given a measurement, assumed to be in imperial units,
  * return a value rounded to the nearest (up or down) eighth.
  */
-function roundToNearestEighth (value: number): number {
+export function roundToNearestEighth (value: number): number {
   return Math.round(value * 8) / 8
 }
 
