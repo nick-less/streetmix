@@ -17,12 +17,17 @@ export interface Segment {
   variantString: string
   width: number
   elevation: number
-  slope?: boolean
+  slope?: boolean | ElevationChange
   variant: Record<string, string>
   warnings: boolean[]
   label?: string
 }
 export type SliceItem = Segment // Alias for future use
+
+export interface ElevationChange {
+  left: number
+  right: number
+}
 
 // Usable for width and height measurements
 export interface MeasurementDefinition {
@@ -275,7 +280,7 @@ export type CapacityForDisplay = Required<
 export interface StreetImageOptions {
   locale: string
   transparentSky: boolean
-  elementLabels: boolean // formerly 'segmentLabels'
+  labels: boolean // formerly 'segmentLabels'
   streetName: boolean
   watermark: boolean
   scale: number // formerly `dpi`
@@ -314,6 +319,7 @@ export interface SkyboxDefWithStyles extends SkyboxDefinition {
 export interface SpriteDefinition {
   id: string
   offsetX?: number
+  offsetY?: number
   originY?: number
 }
 

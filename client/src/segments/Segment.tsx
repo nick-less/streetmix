@@ -20,9 +20,10 @@ import SegmentLabelContainer from './SegmentLabelContainer'
 
 import {
   TILE_SIZE,
-  SEGMENT_WARNING_OUTSIDE,
-  SEGMENT_WARNING_WIDTH_TOO_SMALL,
-  SEGMENT_WARNING_WIDTH_TOO_LARGE
+  SLICE_WARNING_OUTSIDE,
+  SLICE_WARNING_WIDTH_TOO_SMALL,
+  SLICE_WARNING_WIDTH_TOO_LARGE,
+  SLICE_WARNING_SLOPE_EXCEEDED_BERM
 } from './constants'
 import { createSliceDragSpec, createSliceDropTargetSpec } from './drag_and_drop'
 import { getSegmentInfo } from './info'
@@ -30,6 +31,7 @@ import { RESIZE_TYPE_INCREMENT } from './resizing'
 import TestSlope from './TestSlope'
 import './Segment.css'
 
+import { calculateSlope } from './slope'
 import type { SliceItem, UnitsSetting } from '@streetmix/types'
 
 interface SliceProps {
@@ -44,13 +46,13 @@ function Segment (props: SliceProps): React.ReactNode {
   const [switchSegments, setSwitchSegments] = useState(false)
   const [oldVariant, setOldVariant] = useState<string>(segment.variantString)
 
+  const street = useSelector((state) => state.street)
   const enableAnalytics = useSelector(
     (state) => state.flags.ANALYTICS.value && state.street.showAnalytics
   )
   const locale = useSelector((state) => state.locale.locale)
   const activeSegment = useSelector((state) => state.ui.activeSegment)
   const infoBubbleHovered = useSelector((state) => state.infoBubble.mouseInside)
-  const capacitySource = useSelector((state) => state.street.capacitySource)
   const coastmixMode = useSelector((state) => state.flags.COASTMIX_MODE.value)
   const dispatch = useDispatch()
 
@@ -193,9 +195,15 @@ function Segment (props: SliceProps): React.ReactNode {
   ): React.ReactNode {
     const isOldVariant = variantType === 'old'
 
-    // The segment ID is a string that uniquely identifies the segment
-    // and can be used as a consistent and reliable seed for a PRNG
-    const randSeed = segment.id
+    const slopeData = calculateSlope(street, sliceIndex)
+    const elevationChange = {
+      left: segment.elevation,
+      right: segment.elevation
+    }
+    if (segment.slope && slopeData !== null) {
+      elevationChange.left = slopeData.leftElevation
+      elevationChange.right = slopeData.rightElevation
+    }
 
     return (
       <div ref={nodeRef} style={{ width: '100%', height: '100%' }}>
@@ -203,8 +211,11 @@ function Segment (props: SliceProps): React.ReactNode {
           actualWidth={segment.width}
           type={segment.type}
           variantString={isOldVariant ? oldVariant : segment.variantString}
-          randSeed={randSeed}
+          // The segment ID is a string that uniquely identifies the segment
+          // and can be used as a consistent and reliable seed for a PRNG
+          randSeed={segment.id}
           elevation={segment.elevation}
+          slope={elevationChange}
         />
         {coastmixMode && <TestSlope slice={segment} />}
       </div>
@@ -218,7 +229,7 @@ function Segment (props: SliceProps): React.ReactNode {
   const displayName =
     segment.label ?? getLocaleSegmentName(segment.type, segment.variantString)
 
-  const average = getSegmentCapacity(segment, capacitySource)?.average
+  const average = getSegmentCapacity(segment, street.capacitySource)?.average
   const elementWidth = segment.width * TILE_SIZE
 
   const segmentStyle = {
@@ -236,14 +247,16 @@ function Segment (props: SliceProps): React.ReactNode {
   }
 
   // Warnings
+  // TODO: implement SLICE_WARNING_SLOPE_EXCEEDED_PATH
   if (
-    segment.warnings[SEGMENT_WARNING_OUTSIDE] ||
-    segment.warnings[SEGMENT_WARNING_WIDTH_TOO_SMALL] ||
-    segment.warnings[SEGMENT_WARNING_WIDTH_TOO_LARGE]
+    segment.warnings[SLICE_WARNING_OUTSIDE] ||
+    segment.warnings[SLICE_WARNING_WIDTH_TOO_SMALL] ||
+    segment.warnings[SLICE_WARNING_WIDTH_TOO_LARGE] ||
+    segment.warnings[SLICE_WARNING_SLOPE_EXCEEDED_BERM]
   ) {
     classNames.push('warning')
   }
-  if (segment.warnings[SEGMENT_WARNING_OUTSIDE]) {
+  if (segment.warnings[SLICE_WARNING_OUTSIDE]) {
     classNames.push('outside')
   }
 
