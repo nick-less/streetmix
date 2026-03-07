@@ -1,18 +1,17 @@
-import React from 'react'
 import { vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
-import { render } from '~/test/helpers/render'
-import { openGallery } from '~/src/store/actions/gallery'
-import { onSignOutClick } from '~/src/users/authentication'
-import IdentityMenu from './IdentityMenu'
+import { render } from '~/test/helpers/render.js'
+import { openGallery } from '~/src/store/actions/gallery.js'
+import { signOut } from '~/src/users/authentication.js'
+import { IdentityMenu } from './IdentityMenu.js'
 
-vi.mock('../../store/actions/gallery', () => ({
-  openGallery: vi.fn((id) => ({ type: 'MOCK_ACTION' }))
+vi.mock('../../store/actions/gallery.js', () => ({
+  openGallery: vi.fn((_id) => ({ type: 'MOCK_ACTION' })),
 }))
-vi.mock('../../users/authentication', () => ({
-  onSignOutClick: vi.fn()
+vi.mock('../../users/authentication.js', () => ({
+  signOut: vi.fn(),
 }))
 
 describe('IdentityMenu', () => {
@@ -21,15 +20,15 @@ describe('IdentityMenu', () => {
       signInData: {
         details: {
           id: 'foo',
-          displayName: 'bar'
-        }
-      }
-    }
+          displayName: 'bar',
+        },
+      },
+    },
   }
 
   it('renders', () => {
     const { asFragment } = render(<IdentityMenu isActive />, {
-      initialState
+      initialState,
     })
     expect(asFragment()).toMatchSnapshot()
   })
@@ -48,6 +47,6 @@ describe('IdentityMenu', () => {
 
     await userEvent.click(screen.getByText('Sign out'))
 
-    expect(onSignOutClick).toBeCalledTimes(1)
+    expect(signOut).toBeCalledTimes(1)
   })
 })

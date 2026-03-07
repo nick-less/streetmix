@@ -1,33 +1,28 @@
+import { getSegmentVariantInfo, getSpriteDef } from '@streetmix/parts'
 import { percentToNumber } from '@streetmix/utils'
 
-import { images } from '../app/load_resources'
-import { formatMessage } from '../locales/locale'
-import { saveStreetToServerIfNecessary } from '../streets/data_model'
-import { applyWarningsToSlices } from '../streets/warnings'
-import { recalculateWidth } from '../streets/width'
+import { images } from '../app/load_resources.js'
 import store from '../store'
-import { updateSegments, changeSegmentProperties } from '../store/slices/street'
-import { getSegmentInfo, getSegmentVariantInfo, getSpriteDef } from './info'
-import { drawScatteredSprites } from './scatter'
+import { segmentsChanged as segmentsChangedActual } from '../store/actions/street.js'
+import { drawScatteredSprites } from './scatter.js'
 import {
   TILE_SIZE,
   TILESET_POINT_PER_PIXEL,
   TILE_SIZE_ACTUAL,
-  MAX_SEGMENT_LABEL_LENGTH,
   BUILDING_LEFT_POSITION,
   BUILDING_RIGHT_POSITION,
-  GROUND_BASELINE_HEIGHT
-} from './constants'
+  GROUND_BASELINE_HEIGHT,
+} from './constants.js'
 import PEOPLE from './people.yaml'
 
 import type {
   BoundaryPosition,
-  ElevationChange,
-  Segment,
+  SlopeProperties,
   SpriteDefinition,
   UnknownVariantInfo,
+  VariantGraphicsDefinition,
   VariantInfo,
-  VariantInfoDimensions
+  VariantInfoDimensions,
 } from '@streetmix/types'
 
 // Adjust spacing between people to be slightly closer
@@ -50,7 +45,7 @@ const PERSON_SPRITE_OFFSET_Y = 10 // in pixels
  * @param multiplier - scale to draw at (default = 1)
  * @param dpi
  */
-export function drawSegmentImage (
+export function drawSegmentImage(
   id: string,
   ctx: CanvasRenderingContext2D,
   sx: number = 0,
@@ -61,6 +56,7 @@ export function drawSegmentImage (
   dy: number,
   dw: number | undefined,
   dh: number | undefined,
+  rotate: number = 0,
   multiplier: number = 1,
   dpi?: number
 ): void {
@@ -73,7 +69,7 @@ export function drawSegmentImage (
 
   // Settings
   const state = store.getState()
-  dpi = dpi || state.system.devicePixelRatio || 1
+  dpi = dpi ?? state.system.devicePixelRatio ?? 1
   const debugRect = state.flags.DEBUG_SEGMENT_CANVAS_RECTANGLES.value || false
 
   // Get image definition
@@ -87,8 +83,6 @@ export function drawSegmentImage (
   // We can't read `.naturalWidth` and `.naturalHeight` properties from
   // the image in IE11, which returns 0. This is why width and height are
   // stored as properties from when the image is first cached
-  // All images are drawn at 2x pixel dimensions so divide in half to get
-  // actual width / height value then multiply by system pixel density
   //
   // dw/dh (and later sw/sh) can be 0, so don't use falsy checks
   dw = dw === undefined ? (svg.width as number) / TILESET_POINT_PER_PIXEL : dw
@@ -99,6 +93,19 @@ export function drawSegmentImage (
   // Set render dimensions based on pixel density
   dx *= dpi
   dy *= dpi
+
+  // Save (then later restore) the context so that rotate is reset on each pass
+  ctx.save()
+
+  // Temporarily translate the destination canvas so that the center is at the
+  // origin point (0, 0), perform the rotation (which always rotates around the
+  // origin), then translate the canvas back to the intended location
+  const translateX = dx + dw / 2
+  const translateY = dy + dh / 2
+  ctx.translate(translateX, translateY)
+  // `rotate()` requires radians, this is how we transform angles to radians
+  ctx.rotate((rotate * Math.PI) / 180)
+  ctx.translate(-translateX, -translateY)
 
   // These rectangles are telling us that we're drawing at the right places.
   if (debugRect === true) {
@@ -120,6 +127,8 @@ export function drawSegmentImage (
     Math.ceil(dw),
     Math.ceil(dh)
   )
+
+  ctx.restore()
 }
 
 /**
@@ -133,7 +142,7 @@ export function drawSegmentImage (
  * @param variantInfo - segment variant info
  * @param actualWidth - segment's actual real life width
  */
-export function getVariantInfoDimensions (
+export function getVariantInfoDimensions(
   variantInfo: VariantInfo | UnknownVariantInfo,
   actualWidth: number = 0
 ): VariantInfoDimensions {
@@ -244,15 +253,21 @@ export function getVariantInfoDimensions (
   return {
     left: left / TILE_SIZE_ACTUAL,
     right: right / TILE_SIZE_ACTUAL,
-    center: center / TILE_SIZE_ACTUAL
+    center: center / TILE_SIZE_ACTUAL,
   }
 }
 
 // Convert single string or object values to single-item array
-function normalizeSpriteDefs (
-  def: string | SpriteDefinition[]
+function normalizeSpriteDefs(
+  defs: VariantGraphicsDefinition
 ): SpriteDefinition[] {
-  return Array.isArray(def) ? def : [{ id: def }]
+  if (typeof defs === 'string') {
+    return [{ id: defs }]
+  } else if (Array.isArray(defs)) {
+    return defs.map((d) => (typeof d === 'string' ? { id: d } : d))
+  } else {
+    return [defs]
+  }
 }
 
 /**
@@ -262,29 +277,60 @@ function normalizeSpriteDefs (
  * @param elevation
  * @returns pixels
  */
-export function getElevation (elevation: number): number {
+export function getElevation(elevation: number): number {
   return elevation * TILE_SIZE
 }
 
 // Ground rendering helper functions
-function getCanvasElevation (elev: number, scale: number): number {
+function getCanvasElevation(elev: number, scale: number): number {
   return (getElevation(elev) + GROUND_BASELINE_HEIGHT) * scale
 }
 
-function drawGroundPattern (
+function drawGroundPattern(
   ctx: CanvasRenderingContext2D,
   dw: number,
   dx: number,
   groundBaseline: number,
-  slope: ElevationChange,
+  elevation: number,
+  slope: SlopeProperties,
   spriteId: string,
   multiplier: number = 1,
   dpi: number
 ): void {
-  const spriteDef = getSpriteDef(spriteId)
-  const spriteImage = images.get(spriteDef.id)
-  const pattern = ctx.createPattern(spriteImage.img, 'repeat')
-  if (!pattern) return
+  // const spriteDef = getSpriteDef(spriteId)
+  // const spriteImage = images.get(spriteDef.id)
+
+  // `createPattern` taints the canvas in Safari, making canvas images
+  // non-exportable. This doesn't affect Firefox or Chrome.
+  // Current workaround is just fill the shape with the color (hard-coded
+  // for now) because no ground pattern is more than a simple color right now.
+  // const pattern = ctx.createPattern(spriteImage.img, 'repeat')
+  // if (!pattern) return
+  let pattern
+  switch (spriteId) {
+    case 'ground--asphalt':
+      pattern = '#292b29'
+      break
+    case 'ground--asphalt-gray':
+      pattern = '#5c5e5f'
+      break
+    case 'ground--asphalt-red':
+      pattern = '#992025'
+      break
+    case 'ground--asphalt-green':
+      pattern = '#2e6550'
+      break
+    case 'ground--sand':
+      pattern = '#ecdbb1'
+      break
+    case 'ground--wall':
+      pattern = '#cead80'
+      break
+    case 'ground--concrete':
+    default:
+      pattern = '#d8d3cb'
+      break
+  }
 
   // TODO: scale the pattern according to image scale
   // This will only be important if we have patterns that aren't solid colors
@@ -301,17 +347,21 @@ function drawGroundPattern (
   // Save context state before drawing ground pattern
   ctx.save()
 
+  // Handle slopes or flat ground
+  // This also handles if slope.values is an empty array
+  const leftElevation = slope.on ? (slope.values[0] ?? elevation) : elevation
+  const rightElevation = slope.on ? (slope.values[1] ?? elevation) : elevation
+  const leftCanvasValue = getCanvasElevation(leftElevation, multiplier)
+  const rightCanvasValue = getCanvasElevation(rightElevation, multiplier)
+
   // Draw a shape representing the ground
   ctx.beginPath()
   // Bottom left
   ctx.moveTo(dx, ground * dpi)
   // Top left
-  ctx.lineTo(dx, (ground - getCanvasElevation(slope.left, multiplier)) * dpi)
+  ctx.lineTo(dx, (ground - leftCanvasValue) * dpi)
   // Top right
-  ctx.lineTo(
-    dx + dw,
-    (ground - getCanvasElevation(slope.right, multiplier)) * dpi
-  )
+  ctx.lineTo(dx + dw, (ground - rightCanvasValue) * dpi)
   // Bottom right
   ctx.lineTo(dx + dw, ground * dpi)
   ctx.closePath()
@@ -339,7 +389,7 @@ function drawGroundPattern (
  * @param multiplier
  * @param dpi
  */
-export function drawSegmentContents (
+export function drawSegmentContents(
   ctx: CanvasRenderingContext2D,
   type: string,
   variantString: string,
@@ -347,7 +397,7 @@ export function drawSegmentContents (
   offsetLeft: number,
   groundBaseline: number,
   elevation: number,
-  slope: ElevationChange,
+  slopeOrig: SlopeProperties | undefined,
   randSeed: string,
   multiplier: number,
   dpi: number
@@ -365,9 +415,28 @@ export function drawSegmentContents (
   const groundLevelOffsetY = variantInfo.offsetY ?? 0
   const elevationValue = getElevation(elevation)
   const groundLevel =
-    groundBaseline -
-    multiplier * (groundLevelOffsetY / TILESET_POINT_PER_PIXEL) -
-    multiplier * elevationValue
+    groundBaseline - multiplier * (groundLevelOffsetY / TILESET_POINT_PER_PIXEL)
+
+  // Clone the slope object from the function argument so it can be
+  // overridden if slope is turned off by slice element/variant rules
+  // Older streets (e.g. rendered in gallery thumbnails) will not have slope
+  // properties, so we also supply a placeholder object in that case
+  const slope: SlopeProperties = slopeOrig
+    ? {
+        on: slopeOrig.on,
+        // This is also catching some instances where values is undefined
+        values: [...(slopeOrig.values ?? [])],
+      }
+    : {
+        on: false,
+        values: [],
+      }
+
+  // If the slice element/variant doesn't allow sloping, turn it off
+  if (variantInfo.slope === 'off' || variantInfo.slope === undefined) {
+    slope.on = false
+    slope.values = []
+  }
 
   const coastmixMode = store.getState().flags.COASTMIX_MODE.value
 
@@ -392,7 +461,8 @@ export function drawSegmentContents (
         ctx,
         segmentWidth,
         offsetLeft + x,
-        groundBaseline,
+        groundLevel,
+        elevation,
         slope,
         sprite.id,
         multiplier,
@@ -446,13 +516,19 @@ export function drawSegmentContents (
       // calculated by subtracting the height of the sprite with the # of
       // pixels to get to the point of the sprite which should align with
       // the ground.
-      const distanceFromGround =
+      let distanceFromGround =
         multiplier *
         TILE_SIZE *
         ((svg.height - (sprite.originY ?? 0) + (sprite.offsetY ?? 0)) /
           TILE_SIZE_ACTUAL)
 
+      if (!slope.on) {
+        distanceFromGround += multiplier * elevationValue
+      }
+
       // Right now only ground items repeat in the Y direction
+      // TODO: specify a way to indicate something should be repeated in
+      // the Y direction without relying on the `ground--` sprite id prefix
       const height = (svg.height / TILE_SIZE_ACTUAL) * TILE_SIZE
 
       // countY should always be at minimum 1.
@@ -469,6 +545,42 @@ export function drawSegmentContents (
           width = drawWidth - (countX - 1) * width
         }
 
+        let x =
+          padding * TILE_SIZE * multiplier +
+          (repeatStartX + i * (svg.width / TILE_SIZE_ACTUAL) * TILE_SIZE) *
+            multiplier
+
+        // hack for positioning the first sloped item
+        if (x === 0) {
+          x = 0.01
+        }
+
+        let rotate = 0
+        if (slope.on) {
+          const adjustment = calculateSlopeYAdjustment(
+            slope,
+            actualWidth,
+            x,
+            svg.width,
+            multiplier,
+            actualWidth * TILE_SIZE // segmentWidth
+          )
+          // TEMP: workaround with magic numbers
+          // TODO refactor this
+          let hack = 8
+          if (sprite.id === 'plants--grass') hack = 10
+          if (sprite.id === 'beach--surface') hack = 6
+          distanceFromGround = adjustment + hack
+
+          // For some reason the slope is reversed so we flip it by multiplying by -1
+          // Copilot suggests this is why:
+          // Negate the slope angle because calculateSlopeAngle() uses a
+          // mathematical coordinate system (y increases upward), while our
+          // rendering context uses screen coordinates (y increases downward),
+          // so the visual slope would appear reversed without this flip
+          rotate = calculateSlopeAngle(slope.values, actualWidth) * -1
+        }
+
         for (let j = 0; j < countY; j++) {
           // If the sprite being rendered is the ground, dy is equal to the
           // groundLevel. If not, dy is equal to the groundLevel minus the
@@ -480,15 +592,13 @@ export function drawSegmentContents (
             undefined,
             width,
             undefined,
-            offsetLeft +
-              padding * TILE_SIZE * multiplier +
-              (repeatStartX + i * (svg.width / TILE_SIZE_ACTUAL) * TILE_SIZE) *
-                multiplier,
+            offsetLeft + x,
             sprite.id.startsWith('ground--')
               ? groundLevel + height * j
               : groundLevel - distanceFromGround,
             width,
             undefined,
+            rotate,
             multiplier,
             dpi
           )
@@ -524,11 +634,26 @@ export function drawSegmentContents (
             multiplier
       }
 
-      const distanceFromGround =
+      let distanceFromGround =
         multiplier *
         TILE_SIZE *
         ((svg.height - (sprite.originY ?? 0) + (sprite.offsetY ?? 0)) /
           TILE_SIZE_ACTUAL)
+
+      // Proof of concept ground adjustment for sloped items
+      if (slope.on) {
+        const adjustment = calculateSlopeYAdjustment(
+          slope,
+          actualWidth,
+          x,
+          svg.width,
+          multiplier,
+          segmentWidth
+        )
+        distanceFromGround += adjustment
+      } else {
+        distanceFromGround += multiplier * elevationValue
+      }
 
       drawSegmentImage(
         sprite.id,
@@ -539,6 +664,7 @@ export function drawSegmentContents (
         undefined,
         offsetLeft + x,
         groundLevel - distanceFromGround,
+        undefined,
         undefined,
         undefined,
         multiplier,
@@ -579,11 +705,26 @@ export function drawSegmentContents (
           multiplier
       }
 
-      const distanceFromGround =
+      let distanceFromGround =
         multiplier *
         TILE_SIZE *
         ((svg.height - (sprite.originY ?? 0) + (sprite.offsetY ?? 0)) /
           TILE_SIZE_ACTUAL)
+
+      // Proof of concept ground adjustment for sloped items
+      if (slope.on) {
+        const adjustment = calculateSlopeYAdjustment(
+          slope,
+          actualWidth,
+          x,
+          svg.width,
+          multiplier,
+          segmentWidth
+        )
+        distanceFromGround += adjustment
+      } else {
+        distanceFromGround += multiplier * elevationValue
+      }
 
       drawSegmentImage(
         sprite.id,
@@ -594,6 +735,7 @@ export function drawSegmentContents (
         undefined,
         offsetLeft + x,
         groundLevel - distanceFromGround,
+        undefined,
         undefined,
         undefined,
         multiplier,
@@ -626,11 +768,26 @@ export function drawSegmentContents (
           offsetX / TILE_SIZE_ACTUAL) *
         TILE_SIZE *
         multiplier
-      const distanceFromGround =
+      let distanceFromGround =
         multiplier *
         TILE_SIZE *
         ((svg.height - (sprite.originY ?? 0) + (sprite.offsetY ?? 0)) /
           TILE_SIZE_ACTUAL)
+
+      // Proof of concept ground adjustment for sloped items
+      if (slope.on) {
+        const adjustment = calculateSlopeYAdjustment(
+          slope,
+          actualWidth,
+          x,
+          svg.width,
+          multiplier,
+          segmentWidth
+        )
+        distanceFromGround += adjustment
+      } else {
+        distanceFromGround += multiplier * elevationValue
+      }
 
       drawSegmentImage(
         sprite.id,
@@ -641,6 +798,7 @@ export function drawSegmentContents (
         undefined,
         offsetLeft + x,
         groundLevel - distanceFromGround,
+        undefined,
         undefined,
         undefined,
         multiplier,
@@ -678,6 +836,8 @@ export function drawSegmentContents (
         offsetLeft - left * TILE_SIZE * multiplier,
         offsetTop,
         groundLevel,
+        elevation,
+        slope,
         randSeed,
         graphics.scatter.minSpacing,
         graphics.scatter.maxSpacing,
@@ -694,8 +854,10 @@ export function drawSegmentContents (
         ctx,
         actualWidth,
         offsetLeft - left * TILE_SIZE * multiplier,
-        null,
+        0,
         groundLevel,
+        elevation,
+        slope,
         randSeed,
         graphics.scatter.minSpacing,
         graphics.scatter.maxSpacing,
@@ -708,7 +870,70 @@ export function drawSegmentContents (
   }
 }
 
-export function getLocaleSegmentName (
+export function calculateSlopeYAdjustment(
+  slope: SlopeProperties,
+  actualWidth: number,
+  x: number,
+  svgWidth: number,
+  multiplier: number,
+  segmentWidth: number
+) {
+  // Get slope
+  const m = calculateSlopePercentage(slope.values, actualWidth)
+
+  // Find x3, the x position along the slope where we need the new y height
+  // TODO: can we calc this without the numbers from pixel dimensions
+  const midpoint =
+    x > 0
+      ? x + (svgWidth / TILE_SIZE_ACTUAL / 2) * TILE_SIZE * multiplier
+      : // If x is less than 0, midpoint is 1/2 of segment width
+        // This only works if the object is in the center.
+        segmentWidth / 2
+  const midpointPercentage = midpoint / segmentWidth
+  const x3 = midpointPercentage * actualWidth
+
+  // Initial values
+  const y1 = slope.values[0]
+  const x1 = 0
+
+  // Solve for y3
+  const y3 = m * (x3 - x1) + y1
+
+  const adjustment = y3 * TILE_SIZE * multiplier
+  return adjustment
+}
+
+export function calculateSlopePercentage(
+  slopeValues: SlopeProperties['values'],
+  width: number
+) {
+  const y1 = slopeValues[0]
+  const y2 = slopeValues[1]
+  const x1 = 0
+  const x2 = width
+
+  // Handle division by 0
+  if (x2 - x1 === 0) {
+    return Infinity
+  }
+
+  const m = (y2 - y1) / (x2 - x1) // Slope calculation (rise over run)
+
+  return m
+}
+
+/* Slope in degrees is the inverse tangent of rise-over-run (percentage) */
+export function calculateSlopeAngle(
+  slopeValues: SlopeProperties['values'],
+  width: number
+) {
+  const slope = calculateSlopePercentage(slopeValues, width)
+
+  // Inverse tangent of rise/run in radians, converted to degrees
+  return Math.atan(slope) * (180 / Math.PI)
+}
+
+export function getLocaleSegmentName(
   type: string,
   variantString: string
 ): string {
@@ -724,73 +949,8 @@ export function getLocaleSegmentName (
 /**
  * TODO: remove this
  */
-export function segmentsChanged (): void {
-  const street = store.getState().street
-  const calculatedWidths = recalculateWidth(street)
-  const updatedSlices = applyWarningsToSlices(street, calculatedWidths)
-
-  store.dispatch(
-    updateSegments(
-      updatedSlices,
-      calculatedWidths.occupiedWidth.toNumber(),
-      calculatedWidths.remainingWidth.toNumber()
-    )
-  )
-
-  saveStreetToServerIfNecessary()
-}
-
-/**
- * Process / sanitize segment labels
- *
- * @params name - Segment label to check
- * @returns normalized / sanitized segment label
- */
-function normalizeSegmentLabel (label: string): string | undefined {
-  label = label.trim()
-
-  // If label is the empty string, return undefined
-  if (label === '') {
-    return undefined
-  }
-
-  // Trim a long label
-  if (label.length > MAX_SEGMENT_LABEL_LENGTH) {
-    label = label.substr(0, MAX_SEGMENT_LABEL_LENGTH) + '…'
-  }
-
-  return label
-}
-
-/**
- * Uses browser prompt to change the segment label
- *
- * @param segment - object describing the segment to edit
- * @param position - index of segment to edit
- */
-export function editSegmentLabel (segment: Segment, position: number): void {
-  const prevLabel =
-    segment.label || getLocaleSegmentName(segment.type, segment.variantString)
-
-  // If prompt returns empty string, set label to undefined. This resets the
-  // label to the original default name
-  // If prompt returns null (the prompt has been canceled), do not change the
-  // label.
-  const labelInput = window.prompt(
-    formatMessage('prompt.segment-label', 'New segment label:'),
-    prevLabel
-  )
-
-  if (labelInput === null) {
-    return
-  }
-
-  const label = normalizeSegmentLabel(labelInput)
-
-  if (label !== prevLabel) {
-    store.dispatch(changeSegmentProperties(position, { label }))
-    segmentsChanged()
-  }
+export function segmentsChanged(): void {
+  store.dispatch(segmentsChangedActual())
 }
 
 /**
@@ -801,7 +961,7 @@ export function editSegmentLabel (segment: Segment, position: number): void {
  *              or a number for the position of the segment. Should be
  *              the `segmentIndex` or `position` variables.
  */
-export function getSegmentEl (position: number | BoundaryPosition): HTMLElement {
+export function getSegmentEl(position: number | BoundaryPosition): HTMLElement {
   let segmentEl: HTMLElement
 
   if (position === BUILDING_LEFT_POSITION) {

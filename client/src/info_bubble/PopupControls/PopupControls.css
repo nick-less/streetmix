@@ -1,5 +1,11 @@
 .popup-controls {
-  .icon {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .icon,
+  .tabler-icon {
     pointer-events: none;
     position: absolute;
     left: 0;
@@ -7,11 +13,18 @@
     width: 100%;
     height: 100%;
     padding: 2px 3px;
-    fill: #231f20;
+  }
+
+  .icon {
+    fill: rgb(35 31 32 / 66%);
+  }
+
+  .tabler-icon {
+    color: rgb(35 31 32 / 66%);
   }
 
   button[disabled] .icon {
-    opacity: 0.4;
+    opacity: 0.5;
   }
 
   [data-icon="lock"] {
@@ -21,33 +34,14 @@
     color: var(--color-copper-800);
   }
 
-  .variants {
-    text-align: start;
-    min-height: var(--popup-button-size);
-    flex-grow: 1;
-  }
-
-  .non-variant {
-    user-select: none;
-
-    /* Takes up the entire width of popup if it is by itself */
-    &:only-child {
-      width: 100%;
-      text-align: center;
-    }
-
-    &.building-height {
-      margin-top: -36px;
-      height: auto;
-      white-space: normal;
-      width: 115px;
-      text-align: center;
-    }
-  }
-
   .variants,
   .non-variant {
-    button {
+    user-select: none;
+    flex-direction: column;
+    gap: 0.5em;
+    display: flex;
+
+    button:not([role="switch"]) {
       white-space: nowrap;
       position: relative;
       padding: 0;
@@ -57,17 +51,19 @@
       width: var(--popup-button-size);
       height: var(--popup-button-size);
 
-      .icon {
-        opacity: 0.666;
-      }
-
       &:not([disabled]):active {
-        .icon {
+        .icon,
+        .tabler-icon {
           margin-top: 1px;
           opacity: 0.9;
         }
       }
     }
+  }
+
+  .variants {
+    text-align: start;
+    flex-grow: 1;
   }
 
   .variant-selected,
@@ -82,21 +78,19 @@
   }
 }
 
-.popup-control-row {
+.popup-control-group {
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  flex-direction: row;
+  justify-content: end;
+  gap: 1em;
 }
 
-.popup-control-group {
-  padding: 10px;
+.popup-control-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-
-  &:not(:first-child) {
-    border-top: 1px solid var(--color-turquoise-300);
-  }
+  align-items: center;
+  position: relative;
+  white-space: nowrap;
+  user-select: none;
 }
 
 .popup-control-label {
@@ -106,21 +100,20 @@
   font-size: 1.1rem;
   font-weight: 500;
   color: var(--color-turquoise-700);
+}
 
-  + .variants {
-    flex-grow: 0 !important;
+.popup-control-icon {
+  line-height: 0;
+
+  > svg {
+    position: relative !important;
+    width: 30px !important;
+    height: 30px !important;
+    margin-inline-end: 0.25em;
   }
 }
 
 .popup-control-button-group {
-  white-space: nowrap;
-  user-select: none;
-
-  &:not(:last-child) {
-    margin-bottom: 5px;
-  }
-
-  button {
-    margin-right: 3px;
-  }
+  display: flex;
+  gap: 0.25em;
 }

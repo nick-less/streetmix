@@ -1,6 +1,5 @@
-import React from 'react'
+import Icon, { type IconNames } from './Icon.js'
 
-import Icon, { type IconNames } from './Icon'
 import './KeyboardKey.css'
 
 interface KeyboardKeyWithIconProps {
@@ -15,7 +14,7 @@ interface KeyboardKeyWithoutIconProps {
 
 type KeyboardKeyProps = KeyboardKeyWithIconProps | KeyboardKeyWithoutIconProps
 
-function KeyboardKey ({ icon, children }: KeyboardKeyProps): React.ReactElement {
+export function KeyboardKey({ icon, children }: KeyboardKeyProps) {
   if (icon !== undefined) {
     // The `title` property on <kbd> is suggested to provide
     // accessible text for the icon being displayed. In this
@@ -33,5 +32,3 @@ function KeyboardKey ({ icon, children }: KeyboardKeyProps): React.ReactElement 
   // child elements provide their own text
   return <kbd className="key">{children}</kbd>
 }
-
-export default KeyboardKey

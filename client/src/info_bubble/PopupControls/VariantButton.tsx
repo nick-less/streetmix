@@ -1,29 +1,46 @@
-import React from 'react'
 import { useIntl } from 'react-intl'
 
-import { useSelector } from '~/src/store/hooks'
+import { useSelector } from '~/src/store/hooks.js'
 import VARIANT_ICONS from '~/src/segments/variant_icons.yaml'
-import Button from '~/src/ui/Button'
-import Icon from '~/src/ui/Icon'
-import { Tooltip } from '~/src/ui/Tooltip'
+import { Button } from '~/src/ui/Button.js'
+import Icon, { type IconNames } from '~/src/ui/Icon.js'
+import { Tooltip } from '~/src/ui/Tooltip.js'
 
 interface VariantButtonProps {
   set: string
   selection: string
   isSelected: boolean
-  onClick: () => void
+  onClick: React.MouseEventHandler
 }
 
-export function VariantButton (
-  props: VariantButtonProps
-): React.ReactElement | null {
+type VariantIconDefinition = (
+  | {
+      id: string
+      iconSet?: never
+    }
+  | {
+      // Icons can also be defined from tabler
+      id: IconNames
+      iconSet: 'tabler'
+    }
+) & {
+  title: string
+  color?: string // CSS colors
+  unlockCondition?: string // todo enums
+  unlockWithFlag?: string // todo enums
+  enableWithFlag?: string // todo enums
+}
+
+type VariantIcons = Record<string, Record<string, VariantIconDefinition>>
+
+export function VariantButton(props: VariantButtonProps) {
   const { set, selection, isSelected, onClick } = props
   const flags = useSelector((state) => state.flags)
   const isSignedIn = useSelector((state) => state.user.signedIn)
   const isSubscriber = useSelector((state) => state.user.isSubscriber)
   const intl = useIntl()
 
-  const icon = VARIANT_ICONS[set][selection]
+  const icon = (VARIANT_ICONS as VariantIcons)[set][selection]
 
   if (icon === undefined) return null
 
@@ -35,7 +52,7 @@ export function VariantButton (
 
   const label = intl.formatMessage({
     id: `variant-icons.${set}|${selection}`,
-    defaultMessage: icon.title
+    defaultMessage: icon.title,
   })
 
   let isLocked = false
@@ -57,7 +74,7 @@ export function VariantButton (
             // Default message ends with a Unicode-only left-right order mark
             // to allow for proper punctuation in `rtl` text direction
             // This character is hidden from editors by default!
-            defaultMessage: 'Upgrade to Streetmix+ to use!‎'
+            defaultMessage: 'Upgrade to Streetmix+ to use!‎',
           })
         }
         break
@@ -70,7 +87,7 @@ export function VariantButton (
             // Default message ends with a Unicode-only left-right order mark
             // to allow for proper punctuation in `rtl` text direction
             // This character is hidden from editors by default!
-            defaultMessage: 'Sign in to use!‎'
+            defaultMessage: 'Sign in to use!‎',
           })
         }
         break
@@ -82,17 +99,21 @@ export function VariantButton (
       <Button
         data-testid={icon.title}
         className={isSelected ? 'variant-selected' : undefined}
-        disabled={isSelected || isLocked}
+        disabled={isLocked}
         onClick={onClick}
       >
-        <svg
-          xmlns="http://www.w3.org/1999/svg"
-          xmlnsXlink="http://www.w3.org/1999/xlink"
-          className="icon"
-          style={icon.color !== undefined ? { fill: icon.color } : undefined}
-        >
-          <use href={`#icon-${icon.id}`} />
-        </svg>
+        {icon.iconSet === 'tabler' ? (
+          <Icon name={icon.id} size="30" stroke="1.5" className="tabler-icon" />
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/1999/svg"
+            xmlnsXlink="http://www.w3.org/1999/xlink"
+            className="icon"
+            style={icon.color !== undefined ? { fill: icon.color } : undefined}
+          >
+            <use href={`#icon-${icon.id}`} />
+          </svg>
+        )}
         {isLocked && <Icon name="lock" />}
       </Button>
     </Tooltip>

@@ -1,16 +1,22 @@
-import React from 'react'
-import { vi } from 'vitest'
+import { vi, type Mock } from 'vitest'
 import { screen } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
+import { getSegmentInfo } from '@streetmix/parts'
 
-import { render } from '~/test/helpers/render'
-import { getSegmentInfo, getSegmentVariantInfo } from '~/src/segments/info'
-import { VariantSet } from './VariantSet'
+import { render } from '~/test/helpers/render.js'
+import { VariantSet } from './VariantSet.js'
 
 import type { SegmentDefinition } from '@streetmix/types'
 
 // Enable mocking of the return value of `getSegmentInfo`
-vi.mock('../../segments/info')
+vi.mock('@streetmix/parts', () => {
+  return {
+    getSegmentInfo: vi.fn(),
+    getSegmentVariantInfo: vi.fn().mockReturnValue({
+      elevation: 0,
+    }),
+  }
+})
 
 // Provide mock variant icons so that we can test icons with `enabledWithFlag`
 vi.mock(
@@ -21,25 +27,27 @@ vi.mock(
 describe('VariantSet', () => {
   const initialState = {
     street: {
+      width: 10,
       boundary: {
         left: {
-          variant: 'residential'
+          variant: 'residential',
         },
         right: {
-          variant: 'residential'
-        }
+          variant: 'residential',
+        },
       },
       segments: [
         {
+          width: 3,
           variant: {
             direction: 'inbound',
-            'public-transit-asphalt': 'regular'
+            'public-transit-asphalt': 'regular',
           },
           variantString: 'inbound|regular',
-          type: 'streetcar'
-        }
-      ]
-    }
+          type: 'streetcar',
+        },
+      ],
+    },
   }
 
   describe('segment variants', () => {
@@ -47,15 +55,12 @@ describe('VariantSet', () => {
 
     beforeEach(() => {
       segment = { variants: ['direction', 'public-transit-asphalt'] }
-      getSegmentInfo.mockImplementation(() => segment)
-      getSegmentVariantInfo.mockImplementation(() => ({
-        elevation: 0
-      }))
+      ;(getSegmentInfo as Mock).mockImplementation(() => segment)
     })
 
     it('renders segment buttons', () => {
       const { asFragment } = render(<VariantSet type="slice" position={0} />, {
-        initialState
+        initialState,
       })
 
       expect(asFragment()).toMatchSnapshot()
@@ -63,7 +68,7 @@ describe('VariantSet', () => {
 
     it('handles switching segment variant', async () => {
       const { store } = render(<VariantSet type="slice" position={0} />, {
-        initialState
+        initialState,
       })
 
       await userEvent.click(screen.getByTestId('Outbound'))
@@ -79,7 +84,7 @@ describe('VariantSet', () => {
   describe('building variants', () => {
     it('handles switching left building', async () => {
       const { store } = render(<VariantSet type="boundary" position="left" />, {
-        initialState
+        initialState,
       })
 
       await userEvent.click(screen.getByTestId('Waterfront'))
@@ -90,7 +95,7 @@ describe('VariantSet', () => {
       const { store } = render(
         <VariantSet type="boundary" position="right" />,
         {
-          initialState
+          initialState,
         }
       )
 
@@ -104,7 +109,7 @@ describe('VariantSet', () => {
 
     beforeEach(() => {
       segment = { variants: ['flagged-variant'] }
-      getSegmentInfo.mockImplementation(() => segment)
+      ;(getSegmentInfo as Mock).mockImplementation(() => segment)
     })
 
     it('renders a button if flag is true', () => {
@@ -113,10 +118,10 @@ describe('VariantSet', () => {
           ...initialState,
           flags: {
             FLAGGED_VARIANT: {
-              value: true
-            }
-          }
-        }
+              value: true,
+            },
+          },
+        },
       })
 
       expect(screen.getByTestId('Flagged variant')).toBeInTheDocument()
@@ -128,10 +133,10 @@ describe('VariantSet', () => {
           ...initialState,
           flags: {
             FLAGGED_VARIANT: {
-              value: false
-            }
-          }
-        }
+              value: false,
+            },
+          },
+        },
       })
 
       expect(screen.queryByTestId('Flagged variant')).not.toBeInTheDocument()

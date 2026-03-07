@@ -1,15 +1,15 @@
-import React, { useState, useRef, useLayoutEffect } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { useIntl, FormattedMessage } from 'react-intl'
 
-import { useSelector } from '../store/hooks'
-import { useGetUserQuery } from '../store/services/api'
-import { getStreetUrl } from '../app/page_url'
-import DateTimeRelative from '../app/DateTimeRelative'
-import StreetName from '../streets/StreetName'
-import { drawStreetThumbnail } from '../streets/thumbnail'
-import Icon from '../ui/Icon'
+import { useSelector } from '../store/hooks.js'
+import { useGetUserQuery } from '../store/services/api.js'
+import { getStreetUrl } from '../app/page_url.js'
+import { DateTimeRelative } from '../app/DateTimeRelative.js'
+import StreetName from '../streets/StreetName.js'
+import { drawStreetThumbnail } from '../streets/thumbnail.js'
+import Icon from '../ui/Icon.js'
 
-import type { Street } from '@streetmix/types'
+import type { StreetAPIResponse } from '@streetmix/types'
 import './GalleryStreetItem.css'
 
 const THUMBNAIL_WIDTH = 180
@@ -17,7 +17,7 @@ const THUMBNAIL_HEIGHT = 110
 const THUMBNAIL_MULTIPLIER = 0.1 * 2
 
 interface GalleryStreetItemProps {
-  street: Street
+  street: StreetAPIResponse
   showStreetOwner: boolean
   selected: boolean
   allowDelete: boolean
@@ -25,18 +25,16 @@ interface GalleryStreetItemProps {
   doDelete: (id: string) => void
 }
 
-function GalleryStreetItem (
-  props: GalleryStreetItemProps
-): React.ReactElement | null {
+export function GalleryStreetItem(props: GalleryStreetItemProps) {
   const {
     street,
     showStreetOwner = true,
     selected = false,
     allowDelete = false,
     doSelect,
-    doDelete
+    doDelete,
   } = props
-  const dpi = useSelector((state) => state.system.devicePixelRatio || 1)
+  const dpi = useSelector((state) => state.system.devicePixelRatio)
   const { data: creatorProfile } = useGetUserQuery(street.creatorId)
   const [isError, setError] = useState<boolean>(false)
   const thumbnailEl = useRef<HTMLCanvasElement>(null)
@@ -60,7 +58,8 @@ function GalleryStreetItem (
         transparentSky: false,
         labels: false,
         streetName: false,
-        watermark: false
+        watermark: false,
+        locale: null,
       })
     } catch (error) {
       console.error(error)
@@ -69,13 +68,13 @@ function GalleryStreetItem (
   }, [thumbnailEl, street, dpi])
 
   // Define event handlers
-  function handleSelectStreet (event: React.MouseEvent): void {
+  function handleSelectStreet(event: React.MouseEvent) {
     event.preventDefault()
     if (event.shiftKey || event.ctrlKey || event.metaKey) return
     doSelect(street.id)
   }
 
-  function handleDeleteStreet (event: React.MouseEvent): void {
+  function handleDeleteStreet(event: React.MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
 
@@ -83,15 +82,15 @@ function GalleryStreetItem (
       {
         id: 'prompt.delete-street',
         defaultMessage:
-          'Are you sure you want to permanently delete {streetName}? This cannot be undone.'
+          'Are you sure you want to permanently delete {streetName}? This cannot be undone.',
       },
       {
         streetName:
           street.name ??
           intl.formatMessage({
             id: 'street.default-name',
-            defaultMessage: 'Unnamed St'
-          })
+            defaultMessage: 'Unnamed St',
+          }),
       }
     )
 
@@ -117,7 +116,6 @@ function GalleryStreetItem (
       <a href={getStreetUrl(street)} onClick={handleSelectStreet}>
         <div className="gallery-street-item-inner">
           <div className="gallery-street-item-canvas">
-            {/* eslint-disable-next-line multiline-ternary -- Formatting conflicts with prettier */}
             {isError ? (
               <div className="gallery-street-item-error">
                 <FormattedMessage
@@ -142,7 +140,7 @@ function GalleryStreetItem (
                   street.creatorId ??
                   intl.formatMessage({
                     id: 'users.anonymous',
-                    defaultMessage: 'Anonymous'
+                    defaultMessage: 'Anonymous',
                   })}
               </div>
             )}
@@ -161,7 +159,7 @@ function GalleryStreetItem (
           onClick={handleDeleteStreet}
           title={intl.formatMessage({
             id: 'gallery.delete-street-tooltip',
-            defaultMessage: 'Delete street'
+            defaultMessage: 'Delete street',
           })}
         >
           <Icon name="trash" />
@@ -170,5 +168,3 @@ function GalleryStreetItem (
     </div>
   )
 }
-
-export default GalleryStreetItem

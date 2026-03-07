@@ -1,15 +1,15 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useDragLayer, type XYCoord } from 'react-dnd'
 
-import { usePrevious } from '~/src/util/usePrevious'
-import SegmentCanvas from './SegmentCanvas'
-import { DragTypes, type DragType, type DraggedItem } from './drag_and_drop'
+import { usePrevious } from '~/src/util/usePrevious.js'
+import { SegmentCanvas } from './SegmentCanvas.js'
+import { DragTypes, type DragType, type DraggedItem } from './drag_and_drop.js'
 import './SegmentDragLayer.css'
 
 const DRAG_OFFSET_Y_PALETTE = -340 - 150 // TODO: Document magic numbers
 const MAX_DRAG_DEGREE = 20
 
-function getDegree (
+function getDegree(
   currentOffset: XYCoord | null,
   prevOffset: XYCoord | null
 ): number {
@@ -29,7 +29,7 @@ function getDegree (
   return deg
 }
 
-function applySegmentStyle (
+function applySegmentStyle(
   el: HTMLDivElement | null,
   type: DragType,
   item: DraggedItem,
@@ -47,19 +47,19 @@ function applySegmentStyle (
   el.style.transform = `translate(${x}px, ${y}px) rotateZ(${deg}deg)`
 }
 
-function SegmentDragLayer (): React.ReactElement {
+export function SegmentDragLayer() {
   const floatingEl = useRef<HTMLDivElement>(null)
   const collectedProps = useDragLayer((monitor) => ({
     item: monitor.getItem(),
     type: monitor.getItemType(),
     currentOffset: monitor.getSourceClientOffset(),
-    isDragging: monitor.isDragging()
+    isDragging: monitor.isDragging(),
   }))
   const { item, type, currentOffset, isDragging } = collectedProps
   const prevOffset = usePrevious(currentOffset)
 
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging && item && 'id' in item) {
       const deg = getDegree(currentOffset, prevOffset)
       applySegmentStyle(
         floatingEl.current,
@@ -73,7 +73,7 @@ function SegmentDragLayer (): React.ReactElement {
 
   return (
     <div className="segment-drag-layer">
-      {isDragging && (
+      {isDragging && item && 'id' in item && (
         <div className="floating segment" ref={floatingEl}>
           <SegmentCanvas randSeed={item.id} {...item} />
         </div>
@@ -81,5 +81,3 @@ function SegmentDragLayer (): React.ReactElement {
     </div>
   )
 }
-
-export default SegmentDragLayer

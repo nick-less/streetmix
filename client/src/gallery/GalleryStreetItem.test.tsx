@@ -1,18 +1,14 @@
-import React from 'react'
 import { vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
-import { render } from '~/test/helpers/render'
+import { render } from '~/test/helpers/render.js'
 import { MOCK_STREET } from '~/test/fixtures'
-import GalleryStreetItem from './GalleryStreetItem'
+import { GalleryStreetItem } from './GalleryStreetItem.js'
 
 // Mock dependencies
-vi.mock('../streets/thumbnail', () => ({
-  drawStreetThumbnail: vi.fn()
-}))
-vi.mock('../app/page_url', () => ({
-  getStreetUrl: vi.fn()
+vi.mock('../streets/thumbnail.js', () => ({
+  drawStreetThumbnail: vi.fn(),
 }))
 
 const baseProps = {
@@ -21,7 +17,7 @@ const baseProps = {
   selected: false,
   allowDelete: true,
   doSelect: () => {},
-  doDelete: () => {}
+  doDelete: () => {},
 }
 
 describe('GalleryStreetItem', () => {
@@ -43,7 +39,7 @@ describe('GalleryStreetItem', () => {
         {...baseProps}
         street={{
           ...MOCK_STREET,
-          name: null
+          name: null,
         }}
       />
     )
@@ -57,7 +53,7 @@ describe('GalleryStreetItem', () => {
         {...baseProps}
         street={{
           ...MOCK_STREET,
-          creatorId: null
+          creatorId: null,
         }}
       />
     )

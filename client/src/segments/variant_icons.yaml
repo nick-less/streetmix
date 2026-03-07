@@ -1,4 +1,4 @@
-building:
+boundary:
   waterfront:
     id: waterfront
     title: Waterfront
@@ -27,6 +27,22 @@ building:
     id: compound-wall
     title: Compound wall
     unlockCondition: SIGN_IN
+  beach:
+    id: beach
+    title: Beach
+    enableWithFlag: COASTMIX_MODE
+  marsh:
+    id: marsh
+    title: Marsh
+    enableWithFlag: COASTMIX_MODE
+  water:
+    id: water
+    title: Water
+    enableWithFlag: COASTMIX_MODE
+  dock:
+    id: dock
+    title: Dock
+    enableWithFlag: COASTMIX_MODE
 ground:
   concrete:
     id: concrete
@@ -441,8 +457,25 @@ vendor-type:
     title: Vendor at platform
 beach-type:
   beach:
-    id: beach
+    id: beach-off
+    iconSet: tabler
     title: Beach
   lounger:
-    id: lounger
+    id: beach
+    iconSet: tabler
     title: Beach lounger
+marsh-type:
+  marsh:
+    id: marsh
+    title: Marsh
+wall-height:
+  low:
+    id: elevation-lower
+    title: Low wall
+  high:
+    id: elevation-higher
+    title: High wall
+guardrail-type:
+  guardrail:
+    id: guardrail
+    title: Guard rail

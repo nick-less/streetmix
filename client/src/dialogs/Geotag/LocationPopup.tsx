@@ -2,7 +2,7 @@ import React from 'react'
 import { FormattedMessage } from 'react-intl'
 import { Popup } from 'react-leaflet'
 
-import Button from '~/src/ui/Button'
+import { Button } from '~/src/ui/Button.js'
 
 import type { LatLngObject } from '@streetmix/types'
 import type { PointExpression } from 'leaflet'
@@ -12,21 +12,21 @@ const POPUP_OFFSET: PointExpression = [0, -30]
 
 interface LocationPopupProps {
   position: LatLngObject
-  label: string
+  label?: string
   isEditable: boolean
   isClearable: boolean
-  handleConfirm: (event: React.MouseEvent) => void
-  handleClear: (event: React.MouseEvent) => void
+  handleConfirm: React.MouseEventHandler
+  handleClear: React.MouseEventHandler
 }
 
-const LocationPopup = ({
+export const LocationPopup = ({
   position,
   label,
   isEditable = false,
   isClearable = false,
   handleConfirm,
-  handleClear
-}: LocationPopupProps): React.ReactElement => {
+  handleClear,
+}: LocationPopupProps) => {
   return (
     <Popup
       position={position}
@@ -37,29 +37,25 @@ const LocationPopup = ({
     >
       <div className="geotag-location-label">{label}</div>
       {isEditable &&
-        (isClearable
-          ? (
-            <div>
-              <Button tertiary onClick={handleClear}>
-                <FormattedMessage
-                  id="dialogs.geotag.clear-location"
-                  defaultMessage="Clear location"
-                />
-              </Button>
-            </div>
-            )
-          : (
-            <div>
-              <Button primary onClick={handleConfirm}>
-                <FormattedMessage
-                  id="dialogs.geotag.confirm-location"
-                  defaultMessage="Confirm location"
-                />
-              </Button>
-            </div>
-            ))}
+        (isClearable ? (
+          <div>
+            <Button tertiary onClick={handleClear}>
+              <FormattedMessage
+                id="dialogs.geotag.clear-location"
+                defaultMessage="Clear location"
+              />
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <Button primary onClick={handleConfirm}>
+              <FormattedMessage
+                id="dialogs.geotag.confirm-location"
+                defaultMessage="Confirm location"
+              />
+            </Button>
+          </div>
+        ))}
     </Popup>
   )
 }
-
-export default LocationPopup

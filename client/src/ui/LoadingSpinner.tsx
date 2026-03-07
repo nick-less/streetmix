@@ -1,5 +1,3 @@
-import React from 'react'
-
 import './LoadingSpinner.css'
 
 interface LoadingSpinnerProps {
@@ -15,9 +13,7 @@ interface LoadingSpinnerProps {
  * The `size` prop allows you to create a smaller spinner ideal for inline
  * UI situations, but the size can also be overriden via CSS (see stylesheet).
  */
-function LoadingSpinner ({
-  size = 'normal'
-}: LoadingSpinnerProps): React.ReactElement {
+function LoadingSpinner({ size = 'normal' }: LoadingSpinnerProps) {
   const classNames = ['loading-spinner']
 
   if (size === 'small') {

@@ -13,7 +13,7 @@ jobs:
       CYPRESS_INSTALL_BINARY: "0"
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       # Use the current LTS version of Node.js
       - name: Use Node.js 22
         uses: actions/setup-node@v6
@@ -25,7 +25,7 @@ jobs:
   test:
     name: Unit and integration tests
     runs-on: ubuntu-latest
-    container: node:lts-buster
+    container: node:24-bookworm # EOL 2026-06-10
     strategy:
       # Use current active LTS and later versions of Node.js if present
       # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
@@ -53,7 +53,7 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Codecov reporting needs fetch-depth > 1
           fetch-depth: 2
@@ -78,7 +78,7 @@ jobs:
     name: End-to-end (E2E) tests
     runs-on: ubuntu-latest
     container:
-      image: cypress/browsers:node-22.14.0-chrome-133.0.6943.53-1-ff-135.0-edge-133.0.3065.59-1
+      image: cypress/browsers:node-24.12.0-chrome-143.0.7499.40-1-ff-146.0-edge-143.0.3650.66-1
     env:
       HUSKY: "0"
       # We need placeholder API keys to mock some third party integrations
@@ -86,11 +86,11 @@ jobs:
       PELIAS_HOST_NAME: dummy.pelias.com
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       # Install NPM dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@v7
         with:
           build: npm run build
           start: npm run serve

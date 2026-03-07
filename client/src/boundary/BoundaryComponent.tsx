@@ -1,24 +1,24 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CSSTransition } from 'react-transition-group'
 
-import { useSelector, useDispatch } from '~/src/store/hooks'
+import { useSelector, useDispatch } from '~/src/store/hooks.js'
 import {
   addBuildingFloor,
-  removeBuildingFloor
-} from '~/src/store/slices/street'
-import { setActiveSegment } from '~/src/store/slices/ui'
-import { usePrevious } from '~/src/util/usePrevious'
+  removeBuildingFloor,
+} from '~/src/store/slices/street.js'
+import { setActiveSegment } from '~/src/store/slices/ui.js'
+import { usePrevious } from '~/src/util/usePrevious.js'
 import {
   MAX_CANVAS_HEIGHT,
-  GROUND_BASELINE_HEIGHT
-} from '~/src/segments/constants'
-import { getElevation } from '~/src/segments/view'
-import { PopupContainer } from '../info_bubble/PopupContainer'
+  GROUND_BASELINE_HEIGHT,
+} from '~/src/segments/constants.js'
+import { getElevation } from '~/src/segments/view.js'
+import { PopupContainer } from '../info_bubble/PopupContainer.js'
 import {
   getBoundaryImageHeight,
   getBoundaryItem,
-  drawBoundary
-} from './boundary'
+  drawBoundary,
+} from './boundary.js'
 import './BoundaryComponent.css'
 
 import type { BoundaryPosition } from '@streetmix/types'
@@ -26,7 +26,7 @@ import type { BoundaryPosition } from '@streetmix/types'
 /**
  * Creates building canvas element to draw on
  */
-function createBoundaryCanvas (
+function createBoundaryCanvas(
   el: HTMLElement,
   position: BoundaryPosition,
   variant: string,
@@ -95,13 +95,14 @@ interface BoundaryProps {
   updatePerspective: (el: HTMLElement | null) => void
 }
 
-function Boundary ({
+export function Boundary({
   position,
   width,
-  updatePerspective
-}: BoundaryProps): React.ReactElement {
+  updatePerspective,
+}: BoundaryProps) {
   const street = useSelector((state) => state.street)
   const activeSegment = useSelector((state) => state.ui.activeSegment)
+  const readOnly = useSelector((state) => state.app.readOnly)
   const leftBoundaryEditable = useSelector(
     (state) => state.flags.EDIT_BOUNDARY_LEFT.value
   )
@@ -124,44 +125,45 @@ function Boundary ({
   const newRef = useRef(null)
   const oldRef = useRef(null)
 
-  const isEditable = !(
-    (!leftBoundaryEditable && position === 'left') ||
-    (!rightBoundaryEditable && position === 'right')
-  )
+  const isEditable =
+    !(
+      (!leftBoundaryEditable && position === 'left') ||
+      (!rightBoundaryEditable && position === 'right')
+    ) && !readOnly
   const variant = street.boundary[position].variant
   const floors = street.boundary[position].floors
   const elevation = street.boundary[position].elevation
   const isOverflowed = street.remainingWidth < 0
+  const { hasFloors, earthColor } = getBoundaryItem(variant)
 
   // Keep previous state for comparisons (ported from legacy behavior)
   const prevState = usePrevious({
     streetId: street.id,
-    variant
+    variant,
   })
 
   // `event` type is not a React event because listener is attached through DOM
   // We need to define a callback so React can properly clean up event handlers
-  const handleKeyDown = useCallback((event: KeyboardEvent): void => {
-    if (!isEditable) return
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!isEditable) return
 
-    const negative = event.key === '-'
+      const negative = event.key === '-'
 
-    // Plus (+) may only triggered with shift key, so also check if
-    // the same physical key (Equal) is pressed
-    const positive = event.key === '+' || event.code === 'Equal'
+      // Plus (+) may only triggered with shift key, so also check if
+      // the same physical key (Equal) is pressed
+      const positive = event.key === '+' || event.code === 'Equal'
 
-    const variant = street.boundary[position].variant
-    const hasFloors = getBoundaryItem(variant).hasFloors
-
-    if (hasFloors) {
-      if (positive) {
-        dispatch(addBuildingFloor(position))
-      } else if (negative) {
-        dispatch(removeBuildingFloor(position))
+      if (hasFloors) {
+        if (positive) {
+          dispatch(addBuildingFloor(position))
+        } else if (negative) {
+          dispatch(removeBuildingFloor(position))
+        }
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    },
+    [dispatch, isEditable, position, hasFloors]
+  )
 
   // For certain changes, redraw canvas
   useEffect(() => {
@@ -211,7 +213,7 @@ function Boundary ({
     }
   }, [handleKeyDown])
 
-  function handleElementMouseEnter (event: React.MouseEvent): void {
+  function handleElementMouseEnter(_event: React.MouseEvent) {
     const el = newEl.current
 
     if (el === null) return
@@ -221,7 +223,7 @@ function Boundary ({
     document.addEventListener('keydown', handleKeyDown)
   }
 
-  function handleElementMouseLeave (): void {
+  function handleElementMouseLeave(_event: React.MouseEvent) {
     const el = newEl.current
 
     if (el === null) return
@@ -231,10 +233,7 @@ function Boundary ({
     document.removeEventListener('keydown', handleKeyDown)
   }
 
-  function changeRefs (
-    ref: HTMLElement | null,
-    isPreviousElement: boolean
-  ): void {
+  function changeRefs(ref: HTMLElement | null, isPreviousElement: boolean) {
     if (!switchElements && !isPreviousElement) return
 
     if (switchElements && isPreviousElement) {
@@ -244,27 +243,32 @@ function Boundary ({
     }
   }
 
-  function handleSwitchElements (): void {
+  function handleSwitchElements() {
     setSwitchElements((s) => !s)
     setNewElementEnter((s) => !s)
     setOldElementEnter((s) => !s)
   }
 
-  function renderBoundary (
+  function renderBoundary(
     boundary: string,
     nodeRef: React.RefObject<null>,
     elevation: number,
-    width: number
-  ): React.ReactElement {
+    width: number,
+    color?: string // should be a valid CSS color string
+  ) {
     const isPreviousElement = boundary === 'old'
 
     const widthStyle = {
       [position]: `-${width}px`,
-      width: width + 'px'
+      width: width + 'px',
     }
     // NOTE - this still renders "higher" because of the "ground plane" on sprites
-    const elevationStyle = {
-      height: `${GROUND_BASELINE_HEIGHT + getElevation(elevation)}px`
+    const elevationStyle: React.CSSProperties = {
+      height: `${GROUND_BASELINE_HEIGHT + getElevation(elevation)}px`,
+    }
+
+    if (color) {
+      elevationStyle.backgroundColor = color
     }
 
     const classNames = ['street-section-boundary']
@@ -282,7 +286,7 @@ function Boundary ({
     // node switching functionality
     return (
       <div className={classNames.join(' ')} style={widthStyle} ref={nodeRef}>
-        <PopupContainer type="boundary" position={position}>
+        <PopupContainer type="boundary" position={position} disabled={readOnly}>
           <button>
             <section
               ref={(ref) => {
@@ -309,7 +313,7 @@ function Boundary ({
         unmountOnExit
         nodeRef={oldRef}
       >
-        {renderBoundary('old', oldRef, elevation, width)}
+        {renderBoundary('old', oldRef, elevation, width, earthColor)}
       </CSSTransition>
       <CSSTransition
         key="new-boundary"
@@ -320,10 +324,8 @@ function Boundary ({
         unmountOnExit
         nodeRef={newRef}
       >
-        {renderBoundary('new', newRef, elevation, width)}
+        {renderBoundary('new', newRef, elevation, width, earthColor)}
       </CSSTransition>
     </>
   )
 }
-
-export default Boundary

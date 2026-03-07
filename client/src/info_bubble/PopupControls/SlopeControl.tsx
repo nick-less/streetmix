@@ -1,48 +1,64 @@
-import React from 'react'
-import { FormattedMessage } from 'react-intl'
+import { useIntl } from 'react-intl'
+import { getSegmentVariantInfo } from '@streetmix/parts'
 
-import { segmentsChanged } from '~/src/segments/view'
-import { useSelector, useDispatch } from '~/src/store/hooks'
-import { changeSegmentProperties } from '~/src/store/slices/street'
-import Switch from '~/src/ui/Switch'
-
-import type { BoundaryPosition } from '@streetmix/types'
+import { useSelector, useDispatch } from '~/src/store/hooks.js'
+import { segmentsChanged } from '~/src/store/actions/street.js'
+import { toggleSliceSlope } from '~/src/store/slices/street.js'
+import Icon from '~/src/ui/Icon.js'
+import { Switch } from '~/src/ui/Switch.js'
+import { Tooltip } from '~/src/ui/Tooltip.js'
 
 interface SlopeControlProps {
-  position: number | BoundaryPosition
+  position: number
 }
 
-export function SlopeControl ({ position }: SlopeControlProps) {
-  const slope = useSelector((state) => {
-    if (typeof position === 'number') {
-      return state.street.segments[position].slope ?? false
-    } else {
-      return false
-    }
+export function SlopeControl({ position }: SlopeControlProps) {
+  // TODO: consider passing slice and slice info into this component, one
+  // level up -- because other sibling components may need it too
+  const slice = useSelector((state) => {
+    return state.street.segments[position]
   })
-
   const dispatch = useDispatch()
+  const intl = useIntl()
 
-  function handleSlopeChange (checked: boolean): void {
-    if (typeof position === 'number') {
-      dispatch(changeSegmentProperties(position, { slope: checked }))
-      segmentsChanged()
-    }
+  // Allow sloping when slope rule is `path` or `berm`. Defaults to false.
+  const { slope } = getSegmentVariantInfo(slice.type, slice.variantString)
+  const allowSlope = slope === 'path' || slope === 'berm'
+  const isSloped = allowSlope && slice.slope.on
+
+  function handleSlopeChange(checked: boolean): void {
+    dispatch(toggleSliceSlope(position, checked))
+    dispatch(segmentsChanged())
   }
 
-  // No slope control for boundaries
-  if (typeof position !== 'number') {
-    return null
-  }
+  if (!allowSlope) return null
+
+  const label = intl.formatMessage({
+    id: 'segments.controls.slope.label',
+    defaultMessage: 'Slope',
+  })
+  const tooltip = intl.formatMessage({
+    id: 'segments.controls.slope.switch-tooltip',
+    defaultMessage: 'Toggle slope',
+  })
 
   return (
     <div className="popup-control-row">
       <div className="popup-control-label">
-        <FormattedMessage id="segments.controls.slope" defaultMessage="Slope" />
+        <Tooltip label={label} placement="left">
+          <span className="popup-control-icon">
+            <Icon name="slope" size="30" stroke="1.5" />
+          </span>
+        </Tooltip>
       </div>
-      <div>
-        <Switch onCheckedChange={handleSlopeChange} checked={slope} />
-      </div>
+      <Tooltip label={tooltip} placement="bottom">
+        <Switch
+          onCheckedChange={handleSlopeChange}
+          checked={isSloped}
+          disabled={!allowSlope}
+          aria-label={label}
+        />
+      </Tooltip>
     </div>
   )
 }

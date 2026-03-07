@@ -1,15 +1,15 @@
-import React, { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Transition } from 'react-transition-group'
 import { FormattedMessage } from 'react-intl'
 
-import { useSelector } from '~/src/store/hooks'
-import CloseButton from '~/src/ui/CloseButton'
-import ExternalLink from '~/src/ui/ExternalLink'
+import { useSelector } from '~/src/store/hooks.js'
+import { CloseButton } from '~/src/ui/CloseButton.js'
+import { ExternalLink } from '~/src/ui/ExternalLink.js'
 import './NotificationBar.css'
 
 const TRANSITION_DURATION = 250
 const TRANSITION_BASE_STYLE = {
-  transition: `margin ${TRANSITION_DURATION}ms ease-out`
+  transition: `margin ${TRANSITION_DURATION}ms ease-out`,
 }
 
 // Past notification localstorage keys
@@ -31,9 +31,7 @@ interface NotificationBarProps {
 
 // NOTE: Notification is passed in as a prop, rather than directly imported
 // from notification.json in this file, in order to make it easier to test.
-function NotificationBar ({
-  notification = {}
-}: NotificationBarProps): React.ReactElement | null {
+function NotificationBar({ notification = {} }: NotificationBarProps) {
   const locale = useSelector((state) => state.locale)
   const {
     display = false,
@@ -41,7 +39,7 @@ function NotificationBar ({
     text,
     link,
     linkText,
-    localStorageKey
+    localStorageKey,
   } = notification
 
   let shouldDisplay = display
@@ -101,7 +99,7 @@ function NotificationBar ({
         ref={el}
         style={{
           ...TRANSITION_BASE_STYLE,
-          marginTop: `-${height}px`
+          marginTop: `-${height}px`,
         }}
       >
         {lede !== undefined && (

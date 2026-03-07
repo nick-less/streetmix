@@ -16,6 +16,7 @@ exports[`MenuBar > renders 1`] = `
         <img
           alt="Streemix"
           class="menu-bar-logo"
+          draggable="false"
           src="test-file-stub"
         />
         <h1>
@@ -32,7 +33,7 @@ exports[`MenuBar > renders 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -46,7 +47,7 @@ exports[`MenuBar > renders 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -75,7 +76,7 @@ exports[`MenuBar > renders 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -89,7 +90,7 @@ exports[`MenuBar > renders 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -102,8 +103,8 @@ exports[`MenuBar > renders 1`] = `
           <svg
             aria-hidden="true"
             data-icon="language"
-            data-icon-source="test"
             focusable="false"
+            size="18"
           />
           <span
             style="position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; word-wrap: normal;"
@@ -113,7 +114,7 @@ exports[`MenuBar > renders 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -146,6 +147,7 @@ exports[`MenuBar > renders logged in user 1`] = `
         <img
           alt="Streemix"
           class="menu-bar-logo"
+          draggable="false"
           src="test-file-stub"
         />
         <h1>
@@ -162,7 +164,7 @@ exports[`MenuBar > renders logged in user 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -176,7 +178,7 @@ exports[`MenuBar > renders logged in user 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -205,7 +207,7 @@ exports[`MenuBar > renders logged in user 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -219,7 +221,7 @@ exports[`MenuBar > renders logged in user 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -232,8 +234,8 @@ exports[`MenuBar > renders logged in user 1`] = `
           <svg
             aria-hidden="true"
             data-icon="language"
-            data-icon-source="test"
             focusable="false"
+            size="18"
           />
           <span
             style="position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; word-wrap: normal;"
@@ -243,7 +245,7 @@ exports[`MenuBar > renders logged in user 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -289,6 +291,7 @@ exports[`MenuBar > renders minimal menu in offline mode 1`] = `
         <img
           alt="Streemix"
           class="menu-bar-logo"
+          draggable="false"
           src="test-file-stub"
         />
         <h1>
@@ -305,7 +308,7 @@ exports[`MenuBar > renders minimal menu in offline mode 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -323,7 +326,7 @@ exports[`MenuBar > renders minimal menu in offline mode 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -337,7 +340,7 @@ exports[`MenuBar > renders minimal menu in offline mode 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>
@@ -350,8 +353,8 @@ exports[`MenuBar > renders minimal menu in offline mode 1`] = `
           <svg
             aria-hidden="true"
             data-icon="language"
-            data-icon-source="test"
             focusable="false"
+            size="18"
           />
           <span
             style="position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; word-wrap: normal;"
@@ -361,7 +364,7 @@ exports[`MenuBar > renders minimal menu in offline mode 1`] = `
           <svg
             class="menu-carat-down"
             data-icon="chevron-down"
-            data-icon-source="test"
+            size="14"
           />
         </button>
       </li>

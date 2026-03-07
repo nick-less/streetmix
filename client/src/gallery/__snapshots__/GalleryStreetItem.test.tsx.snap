@@ -5,7 +5,9 @@ exports[`GalleryStreetItem > renders 1`] = `
   <div
     class="gallery-street-item"
   >
-    <a>
+    <a
+      href="/foo/435/baz"
+    >
       <div
         class="gallery-street-item-inner"
       >
@@ -51,7 +53,6 @@ exports[`GalleryStreetItem > renders 1`] = `
     >
       <svg
         data-icon="trash"
-        data-icon-source="test"
       />
     </button>
   </div>

@@ -17,6 +17,7 @@ exports[`StreetEditable > segment warnings > too large > Pressing \`+\` does not
         >
           <button
             data-slice-index="0"
+            data-slice-left="0"
           >
             <div
               class="segment-label-container"
@@ -51,7 +52,7 @@ exports[`StreetEditable > segment warnings > too large > Pressing \`+\` does not
             >
               <svg
                 data-icon="chevron-left"
-                data-icon-source="test"
+                size="30"
               />
             </div>
             <div
@@ -59,7 +60,7 @@ exports[`StreetEditable > segment warnings > too large > Pressing \`+\` does not
             >
               <svg
                 data-icon="chevron-right"
-                data-icon-source="test"
+                size="30"
               />
             </div>
             <div

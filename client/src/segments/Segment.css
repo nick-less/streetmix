@@ -11,16 +11,16 @@
   > button {
     width: 100%;
     height: 100%;
-
-    body:not(.read-only) & {
-      cursor: grab;
-    }
   }
 }
 
 .segment-canvas-container {
   width: 100%;
   height: 100%;
+
+  body:not(.read-only) & {
+    cursor: grab;
+  }
 }
 
 body.segment-move-dragging .segment-empty {
@@ -43,11 +43,14 @@ body.immediate-segment-resize .segment {
 }
 
 .segment.active .active-bg {
-  background: var(--segment-active-background);
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
+  /* Do not display if in read-only mode */
+  body:not(.read-only) & {
+    background: var(--segment-active-background);
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
 }
 
 .segment.dragged-out {

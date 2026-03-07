@@ -1,25 +1,30 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useIntl } from 'react-intl'
 
 import logo from 'url:../../images/logo_horizontal.svg'
-import { useSelector } from '../store/hooks'
-import AccessibleIcon from '../ui/AccessibleIcon'
-import Icon from '../ui/Icon'
-import { doSignIn } from '../users/authentication'
-import InstanceBadge from './InstanceBadge'
-import MenuBarItem from './MenuBarItem'
-import SignInButton from './SignInButton'
-import UpgradeButton from './UpgradeButton'
-import AvatarMenu from './AvatarMenu'
+import { useSelector } from '../store/hooks.js'
+import AccessibleIcon from '../ui/AccessibleIcon.js'
+import Icon from '../ui/Icon.js'
+import { doSignIn } from '../users/authentication.js'
+import InstanceBadge from './InstanceBadge.js'
+import MenuBarItem from './MenuBarItem.js'
+import SignInButton from './SignInButton.js'
+import UpgradeButton from './UpgradeButton.js'
+import AvatarMenu from './AvatarMenu.js'
 
 import type { UserProfile } from '../types'
 import './MenuBar.css'
+
+export interface MenuCoords {
+  leftMenuBarRightPos?: number
+  rightMenuBarLeftPos?: number
+}
 
 interface MenuBarProps {
   onMenuDropdownClick: (menu: string, node: HTMLElement) => void
 }
 
-function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
+export function MenuBar({ onMenuDropdownClick }: MenuBarProps) {
   const user = useSelector((state) => state.user.signInData?.details)
   const isSubscriber = useSelector(
     (state) => state.user.signedIn && state.user.isSubscriber
@@ -31,13 +36,16 @@ function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
       state.flags.LOCALES_LEVEL_2.value ||
       state.flags.LOCALES_LEVEL_3.value
   )
+  const coastmixMode = useSelector(
+    (state) => state.flags.COASTMIX_MODE?.value ?? false
+  )
   const menuBarRightEl = useRef<HTMLUListElement>(null)
   const menuBarLeftEl = useRef<HTMLUListElement>(null)
   const intl = useIntl()
 
   const languageLabel = intl.formatMessage({
     id: 'settings.language.label',
-    defaultMessage: 'Language'
+    defaultMessage: 'Language',
   })
 
   useEffect(() => {
@@ -62,7 +70,7 @@ function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
    * Pass in the name of this menu, and it returns (curries) a function
    * that handles the event.
    */
-  function handleClick (menu: string): (event: React.MouseEvent) => void {
+  function handleClick(menu: string): (event: React.MouseEvent) => void {
     return (event: React.MouseEvent) => {
       const el = (event.target as HTMLElement).closest('button')
       if (el !== null) {
@@ -71,7 +79,7 @@ function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
     }
   }
 
-  function handleWindowResize (): void {
+  function handleWindowResize(): void {
     // Throw this event so that the StreetName can figure out if it needs
     // to push itself lower than the menubar
     const rightMenuBarLeftPos =
@@ -79,38 +87,49 @@ function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
     const leftMenuBarRightPos =
       menuBarLeftEl.current?.getBoundingClientRect().right
     window.dispatchEvent(
-      new CustomEvent('stmx:menu_bar_resized', {
+      new CustomEvent<MenuCoords>('stmx:menu_bar_resized', {
         detail: {
           rightMenuBarLeftPos,
-          leftMenuBarRightPos
-        }
+          leftMenuBarRightPos,
+        },
       })
     )
   }
 
-  function renderUserAvatar (user?: UserProfile): React.ReactElement {
-    return user
-      ? (
-        <li>
-          <AvatarMenu
-            user={user}
-            isSubscriber={isSubscriber}
-            onClick={handleClick('identity')}
-          />
-        </li>
-        )
-      : (
-        <li>
-          <SignInButton onClick={doSignIn} />
-        </li>
-        )
+  function renderUserAvatar(user?: UserProfile) {
+    return user ? (
+      <li>
+        <AvatarMenu
+          user={user}
+          isSubscriber={isSubscriber}
+          onClick={handleClick('identity')}
+        />
+      </li>
+    ) : (
+      <li>
+        <SignInButton onClick={doSignIn} />
+      </li>
+    )
   }
 
   return (
     <nav className="menu-bar" role="menubar" aria-orientation="horizontal">
       <ul className="menu-bar-left" ref={menuBarLeftEl}>
+        {coastmixMode && (
+          <img
+            src="/images/coastmix.png"
+            className="coastmix-tape"
+            draggable={false}
+            alt="Coastmix"
+          />
+        )}
         <li className="menu-bar-title">
-          <img src={logo} alt="Streemix" className="menu-bar-logo" />
+          <img
+            src={logo}
+            alt="Streemix"
+            className="menu-bar-logo"
+            draggable={false}
+          />
           <h1>Streetmix</h1>
         </li>
         <MenuBarItem
@@ -132,12 +151,22 @@ function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
         )}
       </ul>
       <ul className="menu-bar-right" ref={menuBarRightEl}>
-        <MenuBarItem
-          label="New street"
-          translation="menu.item.new-street"
-          id="menubar-new"
-          onClick={handleClick('new')}
-        />
+        {/* Tweak this menu label in Coastmix */}
+        {coastmixMode ? (
+          <MenuBarItem
+            label="New waterfront"
+            translation="menu.item.new-waterfront"
+            id="menubar-new"
+            onClick={handleClick('new')}
+          />
+        ) : (
+          <MenuBarItem
+            label="New street"
+            translation="menu.item.new-street"
+            id="menubar-new"
+            onClick={handleClick('new')}
+          />
+        )}
         <MenuBarItem
           label="Share"
           translation="menu.item.share"
@@ -151,7 +180,7 @@ function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
             tooltip={languageLabel}
           >
             <AccessibleIcon label={languageLabel}>
-              <Icon name="language" />
+              <Icon name="language" size="18" />
             </AccessibleIcon>
           </MenuBarItem>
         )}
@@ -161,5 +190,3 @@ function MenuBar ({ onMenuDropdownClick }: MenuBarProps): React.ReactElement {
     </nav>
   )
 }
-
-export default MenuBar

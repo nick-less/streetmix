@@ -24,25 +24,25 @@
 grass:
   id: grass
   label: Grass
-  spriteId: buildings--grass
+  spriteId: boundaries--grass
   hasFloors: false
   sameOnBothSides: true
 fence:
   id: fence
   label: Empty lot
-  spriteId: buildings--fenced-lot
+  spriteId: boundaries--fenced-lot
   hasFloors: false
 parking-lot:
   id: parking-lot
   label: Parking lot
-  spriteId: buildings--parking-lot
+  spriteId: boundaries--parking-lot
   hasFloors: false
   repeatHalf: true
   offsetY: 0.15 # meters
 waterfront:
   id: waterfront
   label: Waterfront
-  spriteId: buildings--waterfront
+  spriteId: boundaries--waterfront
   hasFloors: false
   alignAtBaseline: true
   repeatHalf: true
@@ -88,5 +88,41 @@ arcade:
 compound-wall:
   id: compound-wall
   label: Compound wall
-  spriteId: buildings--compound-wall
+  spriteId: boundaries--compound-wall
   hasFloors: false
+beach:
+  id: beach
+  label: Beach
+  spriteId: boundaries--beach
+  hasFloors: false
+  alignAtBaseline: true
+  repeatHalf: true
+  earthColor: "#ecdbb1"
+marsh:
+  id: marsh
+  label: Marsh
+  spriteId: boundaries--marsh
+  hasFloors: false
+  alignAtBaseline: true
+  repeatHalf: true
+  earthColor: "#ecdbb1"
+water:
+  id: water
+  label: Water
+  spriteId: boundaries--water
+  hasFloors: false
+  alignAtBaseline: true
+  repeatHalf: true
+  earthColor: "#366387"
+dock:
+  id: dock
+  label: Dock
+  spriteId: boundaries--dock
+  hasFloors: true
+  variantsCount: 1 # need this to be 1 to do a thing right
+  floorHeight: 0.25 # meters (match illustration)
+  roofHeight: 3 # meters (match illustration)
+  mainFloorHeight: 1.75 # meters (match illustration)
+  alignAtBaseline: true
+  repeatHalf: true
+  earthColor: "#366387"

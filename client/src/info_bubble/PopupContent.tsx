@@ -1,37 +1,38 @@
-import React from 'react'
-
-import { useDispatch } from '~/src/store/hooks'
-import { loseAnyFocus } from '~/src/util/focus'
-import { TooltipGroup } from '~/src/ui/Tooltip'
-import { setInfoBubbleMouseInside } from '../store/slices/infoBubble'
+import { useDispatch } from '~/src/store/hooks.js'
+import { loseAnyFocus } from '~/src/util/focus.js'
+import { TooltipGroup } from '~/src/ui/Tooltip.js'
+import { setInfoBubbleMouseInside } from '../store/slices/infoBubble.js'
 import { PopupControls } from './PopupControls'
 import { PopupHeader } from './PopupHeader'
 import { PopupLower } from './PopupLower'
 
-import type { SectionElementTypeAndPosition } from '@streetmix/types'
+import type { SectionElementTypeAndPosition, Prettify } from '@streetmix/types'
 
-type PopupContentProps = SectionElementTypeAndPosition & {
-  setArrowHighlighted: (v: boolean) => void
-}
+type PopupContentProps = Prettify<
+  SectionElementTypeAndPosition & {
+    setArrowHighlighted: (v: boolean) => void
+  }
+>
 
-export function PopupContent ({
-  type,
-  position,
-  setArrowHighlighted
-}: PopupContentProps): React.ReactNode | null {
+// `...props` is a discriminated union of `SectionElementTypeAndPosition`,
+// do not destructure it or it will lose type safety!
+export function PopupContent({
+  setArrowHighlighted,
+  ...props
+}: PopupContentProps) {
   const dispatch = useDispatch()
 
   const classNames = ['popup-content']
 
-  if (type === 'boundary') {
+  if (props.type === 'boundary') {
     classNames.push('popup-at-boundary')
   }
 
-  function handleMouseEnter () {
+  function handleMouseEnter() {
     dispatch(setInfoBubbleMouseInside(true))
   }
 
-  function handleMouseLeave () {
+  function handleMouseLeave() {
     dispatch(setInfoBubbleMouseInside(false))
 
     // Returns focus to body when pointer leaves the info bubble area
@@ -48,12 +49,9 @@ export function PopupContent ({
       onMouseLeave={handleMouseLeave}
     >
       <TooltipGroup>
-        <PopupHeader type={type} position={position} />
-        <PopupControls type={type} position={position} />
-        <PopupLower
-          position={position}
-          setArrowHighlighted={setArrowHighlighted}
-        />
+        <PopupHeader {...props} />
+        <PopupControls {...props} />
+        <PopupLower setArrowHighlighted={setArrowHighlighted} {...props} />
       </TooltipGroup>
     </div>
   )

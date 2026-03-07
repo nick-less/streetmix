@@ -1,32 +1,31 @@
 /**
  * Adds scroll buttons to UI elements.
  */
-import React, { forwardRef, useEffect, useRef, useLayoutEffect } from 'react'
+import { useEffect, useRef, useLayoutEffect } from 'react'
 
-import { registerKeypress, deregisterKeypress } from '../app/keypress'
-import { animate } from '../util/helpers'
-import Button from './Button'
-import Icon from './Icon'
+import { registerKeypress, deregisterKeypress } from '../app/keypress.js'
+import { animate } from '../util/helpers.js'
+import { Button } from './Button.js'
+import Icon from './Icon.js'
 import './Scrollable.css'
 
 interface ScrollableProps {
   className?: string
-  onScroll?: (event: React.UIEvent<HTMLDivElement>) => void
+  onScroll?: React.UIEventHandler
   allowKeyboardScroll?: boolean
   children?: React.ReactNode
+  ref?: React.ForwardedRef<HTMLDivElement>
 }
 
 const SCROLL_ANIMATE_DURATION = 300 // in ms
 
-const WrappedScrollable = forwardRef(function Scrollable (
-  props: ScrollableProps,
-  ref: React.Ref<HTMLDivElement>
-): React.ReactElement {
+export function Scrollable(props: ScrollableProps) {
   const {
     className,
     onScroll = () => undefined,
     allowKeyboardScroll = false,
-    children
+    children,
+    ref = null,
   } = props
   const scrollerEl = useRef<HTMLDivElement>(null)
   const leftButtonEl = useRef<HTMLButtonElement>(null)
@@ -43,14 +42,14 @@ const WrappedScrollable = forwardRef(function Scrollable (
 
   useEffect(() => {
     if (allowKeyboardScroll) {
-      registerKeypress('left', handleClickLeft)
-      registerKeypress('right', handleClickRight)
+      registerKeypress('left', handleLeft)
+      registerKeypress('right', handleRight)
     }
 
     return () => {
       if (allowKeyboardScroll) {
-        deregisterKeypress('left', handleClickLeft)
-        deregisterKeypress('right', handleClickRight)
+        deregisterKeypress('left', handleLeft)
+        deregisterKeypress('right', handleRight)
       }
     }
   })
@@ -64,9 +63,7 @@ const WrappedScrollable = forwardRef(function Scrollable (
     }
   })
 
-  function handleClickLeft (
-    event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>
-  ): void {
+  function handleLeft(_event: React.MouseEvent | React.KeyboardEvent) {
     const el = scrollerEl.current
 
     if (el === null) return
@@ -76,9 +73,7 @@ const WrappedScrollable = forwardRef(function Scrollable (
     animate(el, { scrollLeft: position }, SCROLL_ANIMATE_DURATION)
   }
 
-  function handleClickRight (
-    event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>
-  ): void {
+  function handleRight(_event: React.MouseEvent | React.KeyboardEvent) {
     const el = scrollerEl.current
 
     if (!el) return
@@ -88,14 +83,14 @@ const WrappedScrollable = forwardRef(function Scrollable (
     animate(el, { scrollLeft: position }, SCROLL_ANIMATE_DURATION)
   }
 
-  function handleScrollContainer (event: React.UIEvent<HTMLDivElement>): void {
+  function handleScrollContainer(event: React.UIEvent<HTMLDivElement>) {
     checkButtonVisibilityState()
 
     // If parent has provided its own onScroll handler function, call that now.
     onScroll(event)
   }
 
-  function checkButtonVisibilityState (): void {
+  function checkButtonVisibilityState() {
     const el = scrollerEl.current
 
     if (!el) return
@@ -149,10 +144,10 @@ const WrappedScrollable = forwardRef(function Scrollable (
       {/* Buttons frame the content to preserve tab order */}
       <Button
         className="scrollable scroll-left"
-        onClick={handleClickLeft}
+        onClick={handleLeft}
         ref={leftButtonEl}
       >
-        <Icon name="chevron-left" />
+        <Icon name="chevron-left" size="24" />
       </Button>
       <div
         className={className}
@@ -161,20 +156,18 @@ const WrappedScrollable = forwardRef(function Scrollable (
         style={{
           // Prevent overscroll from doing forward/back
           // navigation on some browsers
-          overscrollBehaviorX: 'contain'
+          overscrollBehaviorX: 'contain',
         }}
       >
         {children}
       </div>
       <Button
         className="scrollable scroll-right"
-        onClick={handleClickRight}
+        onClick={handleRight}
         ref={rightButtonEl}
       >
-        <Icon name="chevron-right" />
+        <Icon name="chevron-right" size="24" />
       </Button>
     </div>
   )
-})
-
-export default WrappedScrollable
+}

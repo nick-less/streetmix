@@ -1,24 +1,24 @@
-import React, { memo } from 'react'
+import { memo } from 'react'
 import { useIntl } from 'react-intl'
 
-import Icon from './Icon'
+import Icon from './Icon.js'
 import './CloseButton.css'
 
-interface CloseButtonProps {
+interface CloseButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   title?: string
   className?: string
-  onClick: (event: React.MouseEvent) => void
+  onClick: React.MouseEventHandler
 }
 
-function CloseButton ({
+export const CloseButton = memo(function CloseButton({
   title,
   className = 'close',
   onClick,
   ...restProps
-}: CloseButtonProps): React.ReactElement {
+}: CloseButtonProps) {
   const defaultTitle = useIntl().formatMessage({
     id: 'btn.dismiss',
-    defaultMessage: 'Dismiss'
+    defaultMessage: 'Dismiss',
   })
 
   return (
@@ -31,6 +31,4 @@ function CloseButton ({
       <Icon name="close" />
     </button>
   )
-}
-
-export default memo(CloseButton)
+})

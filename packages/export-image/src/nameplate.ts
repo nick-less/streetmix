@@ -1,5 +1,5 @@
 import type * as Canvas from '@napi-rs/canvas'
-import type { Street } from '@streetmix/types'
+import type { StreetAPIResponse } from '@streetmix/types'
 
 const STREET_NAME_FONT = 'Overpass'
 const STREET_NAME_FONT_SIZE = 70
@@ -11,9 +11,9 @@ const STREET_NAME_LETTER_SPACING = -0.125
  *
  * @modifies {Canvas.SKRSContext2D} ctx
  */
-export function drawNameplate (
+export function drawNameplate(
   ctx: Canvas.SKRSContext2D,
-  street: Street,
+  street: StreetAPIResponse,
   width: number,
   scale: number
 ): void {
@@ -29,6 +29,8 @@ export function drawNameplate (
   ctx.font = `normal ${STREET_NAME_FONT_WEIGHT} ${
     STREET_NAME_FONT_SIZE * scale
   }px ${STREET_NAME_FONT}`
+  // This is NOT standard, but is currently implemented this way in @napi-rs/canvas
+  ctx.fontVariationSettings = `'wght' ${STREET_NAME_FONT_WEIGHT}`
 
   // Handles long names
   // Measurements need to be devided by `scale` because they are rendered

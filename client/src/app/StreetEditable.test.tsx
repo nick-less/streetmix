@@ -1,21 +1,28 @@
-import React from 'react'
+import { createRef } from 'react'
 import { vi } from 'vitest'
 import { userEvent } from '@testing-library/user-event'
 
-import { render } from '~/test/helpers/render'
-import { SETTINGS_UNITS_METRIC } from '../users/constants'
-import StreetEditable from './StreetEditable'
+import { render } from '~/test/helpers/render.js'
+import { SETTINGS_UNITS_METRIC } from '../users/constants.js'
+import { StreetEditable } from './StreetEditable.js'
 
 describe('StreetEditable', () => {
   beforeEach(() => {
     vi.resetModules()
   })
 
-  const setBuildingWidth = vi.fn()
+  const setBoundaryWidth = vi.fn()
   const updatePerspective = (): void => {}
   const type = 'streetcar'
   const variantString = 'inbound|regular'
-  const segment = { variantString, id: '1', width: 400, type, warnings: [] }
+  const segment = {
+    variantString,
+    id: '1',
+    width: 400,
+    type,
+    slope: { on: false, values: [] },
+    warnings: [],
+  }
 
   describe('segment warnings', () => {
     describe('too large', () => {
@@ -26,36 +33,38 @@ describe('StreetEditable', () => {
               id: '',
               variant: '',
               floors: 0,
-              elevation: 0
+              elevation: 0,
             },
             right: {
               id: '',
               variant: '',
               floors: 0,
-              elevation: 0
-            }
+              elevation: 0,
+            },
           },
           segments: [segment],
           width: 120,
           units: SETTINGS_UNITS_METRIC,
-          showAnalytics: true
+          showAnalytics: true,
         }
 
         const { getByTestId, store, container, asFragment } = render(
           <StreetEditable
-            setBuildingWidth={setBuildingWidth}
+            setBoundaryWidth={setBoundaryWidth}
             updatePerspective={updatePerspective}
-            resizeType={null}
+            resizeType={undefined}
+            ref={createRef()}
           />,
           {
             initialState: {
               flags: {
                 ANALYTICS: { value: true },
                 COASTMIX_MODE: { value: false },
-                DEBUG_SEGMENT_CANVAS_RECTANGLES: { value: false }
+                DEBUG_SEGMENT_CANVAS_RECTANGLES: { value: false },
+                DEBUG_SLICE_SLOPE: { value: false },
               },
-              street
-            }
+              street,
+            },
           }
         )
 
@@ -70,7 +79,7 @@ describe('StreetEditable', () => {
           true,
           false,
           false,
-          false
+          false,
         ])
         expect(asFragment()).toMatchSnapshot()
       })

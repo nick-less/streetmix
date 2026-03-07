@@ -1,23 +1,23 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { FormattedMessage } from 'react-intl'
 
-import Button from '../ui/Button'
-import VoteComment from './VoteComment'
-import SentimentIcon from './SentimentIcon'
-import { getDataForScore } from './scores'
+import { Button } from '../ui/Button.js'
+import { VoteComment } from './VoteComment.js'
+import { SentimentIcon } from './SentimentIcon.js'
+import { getDataForScore } from './scores.js'
 import './VoteReceipt.css'
 
 interface VoteReceiptProps {
   score?: number
-  handleClose: () => void
+  handleClose: React.MouseEventHandler
   streetId: string
 }
 
-function VoteReceipt ({
+export function VoteReceipt({
   score,
   handleClose,
-  streetId
-}: VoteReceiptProps): React.ReactElement | null {
+  streetId,
+}: VoteReceiptProps) {
   const doneEl = useRef<HTMLDivElement>(null)
 
   // When a score is received, we animate the background container
@@ -60,7 +60,7 @@ function VoteReceipt ({
                   id="sentiment.prompt.joyful"
                   defaultMessage="Would you say this street feels <em>joyful</em>?"
                   values={{
-                    em: (chunks) => <em>{chunks}</em>
+                    em: (chunks) => <em>{chunks}</em>,
                   }}
                 />
               </strong>
@@ -77,7 +77,7 @@ function VoteReceipt ({
                         defaultMessage={vote.label.defaultMessage}
                       />
                     </em>
-                  )
+                  ),
                 }}
               />{' '}
               <FormattedMessage
@@ -89,7 +89,7 @@ function VoteReceipt ({
           </div>
         </div>
         <div className="sentiment-survey-done-buttons">
-          <Button primary href="/survey">
+          <Button primary type="link" href="/survey">
             <FormattedMessage
               id="sentiment.done.vote-another"
               defaultMessage="Vote on another!"
@@ -106,5 +106,3 @@ function VoteReceipt ({
     </div>
   )
 }
-
-export default VoteReceipt

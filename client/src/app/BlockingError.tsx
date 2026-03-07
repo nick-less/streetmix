@@ -1,30 +1,22 @@
-/**
- * BlockingError.jsx
- *
- * Displays a blocking error message on top of the application.
- *
- * @module BlockingError
- */
-import React from 'react'
 import { FormattedMessage } from 'react-intl'
 
-import { useSelector } from '../store/hooks'
-import { useGetUserQuery } from '../store/services/api'
-import Button from '../ui/Button'
-import ExternalLink from '../ui/ExternalLink'
-import Avatar from '../users/Avatar'
-import { doSignIn } from '../users/authentication'
-import { goReload, goHome, goNewStreet, goExampleStreet } from './routing'
-import { ERRORS } from './errors'
+import { useSelector } from '../store/hooks.js'
+import { useGetUserQuery } from '../store/services/api.js'
+import { Button } from '../ui/Button.js'
+import { ExternalLink } from '../ui/ExternalLink.js'
+import { Avatar } from '../users/Avatar.js'
+import { doSignIn } from '../users/authentication.js'
+import { goReload, goHome, goNewStreet } from './routing.js'
+import { ERRORS } from './errors.js'
 
 import type { StreetState } from '@streetmix/types'
 
-function BlockingError (): React.ReactElement | null {
+export function BlockingError() {
   const errorType = useSelector((state) => state.errors.errorType)
   const street = useSelector((state) => state.street)
   const { data: creatorProfile } = useGetUserQuery(street.creatorId)
 
-  let title: React.ReactElement | string = ''
+  let title: React.ReactElement | string
   let description: React.ReactElement | string = ''
   let cta: React.ReactElement | string = ''
 
@@ -36,15 +28,13 @@ function BlockingError (): React.ReactElement | null {
       />
     </Button>
   )
-  const linkToUser = (street: StreetState): React.ReactElement | null => {
-    return street?.creatorId !== null
-      ? (
-        <a href={'/' + street.creatorId}>
-          <Avatar userId={street.creatorId} />
-          {creatorProfile?.displayName ?? street.creatorId}
-        </a>
-        )
-      : null
+  const linkToUser = (street: StreetState) => {
+    return street?.creatorId !== null ? (
+      <a href={'/' + street.creatorId}>
+        <Avatar userId={street.creatorId} />
+        {creatorProfile?.displayName ?? street.creatorId}
+      </a>
+    ) : null
   }
   const reloadButton = (
     <Button primary onClick={goReload}>
@@ -76,7 +66,7 @@ function BlockingError (): React.ReactElement | null {
           <ExternalLink href="https://docs.streetmix.net/community">
             {chunks}
           </ExternalLink>
-        )
+        ),
       }}
     />
   )
@@ -139,7 +129,7 @@ function BlockingError (): React.ReactElement | null {
             id="error.street-not-found-but-user-description"
             defaultMessage="There is no street with this link! But you can look at other streets by {user}"
             values={{
-              user: linkToUser(street)
+              user: linkToUser(street),
             }}
           />
         </p>
@@ -159,7 +149,7 @@ function BlockingError (): React.ReactElement | null {
             id="error.street-deleted-description"
             defaultMessage="There is no longer a street with this link, but you can look at other streets by {user}"
             values={{
-              user: linkToUser(street)
+              user: linkToUser(street),
             }}
           />
         </p>
@@ -456,7 +446,7 @@ function BlockingError (): React.ReactElement | null {
                   <ExternalLink href="https://www.microsoft.com/en-us/windows/microsoft-edge">
                     {chunks}
                   </ExternalLink>
-                )
+                ),
               }}
             />
           </p>
@@ -469,7 +459,7 @@ function BlockingError (): React.ReactElement | null {
                   <ExternalLink href="https://docs.streetmix.net/user-guide/support/faq#internet-explorer">
                     {chunks}
                   </ExternalLink>
-                )
+                ),
               }}
             />
           </p>
@@ -482,35 +472,11 @@ function BlockingError (): React.ReactElement | null {
                   <ExternalLink href="https://docs.streetmix.net/community">
                     {chunks}
                   </ExternalLink>
-                )
+                ),
               }}
             />
           </p>
         </>
-      )
-      break
-    case ERRORS.CANNOT_CREATE_NEW_STREET_ON_PHONE:
-      title = (
-        <FormattedMessage
-          id="error.cannot-create-new-street-on-phone-title"
-          defaultMessage="Streetmix works on tablets and desktops only."
-        />
-      )
-      description = (
-        <p>
-          <FormattedMessage
-            id="error.cannot-create-new-street-on-phone-description"
-            defaultMessage="If you follow another link to a specific street, you can view it on your phone – but you cannot yet create new streets."
-          />
-        </p>
-      )
-      cta = (
-        <Button primary onClick={goExampleStreet}>
-          <FormattedMessage
-            id="error.button.view-example"
-            defaultMessage="View an example street"
-          />
-        </Button>
       )
       break
     default:
@@ -551,5 +517,3 @@ function BlockingError (): React.ReactElement | null {
 
   return null
 }
-
-export default BlockingError

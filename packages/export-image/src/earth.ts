@@ -8,9 +8,9 @@ const BACKGROUND_EARTH_COLOUR = 'rgb(53, 45, 39)'
 /**
  * Draws earth (soil and dirt below ground).
  *
- * @modifies {CanvasRenderingContext2D} ctx
+ * @modifies {Canvas.SKRSContext2D} ctx
  */
-export function drawEarth (
+export function drawEarth(
   ctx: Canvas.SKRSContext2D,
   street: StreetJson,
   width: number,
@@ -41,6 +41,8 @@ export function drawEarth (
   if (street.boundary?.right.elevation > 0) {
     rightElevation = street.boundary.right.elevation * TILE_SIZE
   }
+
+  // TODO: handle earthColor properties
 
   // Earth below left boundary
   ctx.fillRect(

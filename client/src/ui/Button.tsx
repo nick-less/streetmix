@@ -10,82 +10,68 @@
  * focusability, events handling, etc. but they should not look like stylized
  * UI buttons.
  */
-import React, { forwardRef } from 'react'
+import React from 'react'
 
 import './Button.css'
 
-interface ButtonProps
-  extends Partial<
-  React.ButtonHTMLAttributes<HTMLButtonElement> &
-  React.AnchorHTMLAttributes<HTMLAnchorElement>
-  > {
-  children?: React.ReactNode
-  className?: string
-  type?: 'button' | 'submit'
-  href?: string
-  // Warning: while in theory these are mutually exclusive,
-  // nothing enforces it!
+interface ButtonBaseProps {
   primary?: boolean
   secondary?: boolean
   tertiary?: boolean
 }
 
-const Button = forwardRef(
-  (
-    {
-      children,
-      className = '',
-      type = 'button',
-      href = '',
-      primary = false,
-      secondary = false,
-      tertiary = false,
-      ...props
-    }: ButtonProps,
-    ref: React.Ref<HTMLButtonElement | HTMLAnchorElement>
-  ) => {
-    const classNames = ['btn']
-    if (primary) {
-      classNames.push('btn-primary')
-    }
-    if (secondary) {
-      classNames.push('btn-secondary')
-    }
-    if (tertiary) {
-      classNames.push('btn-tertiary')
-    }
-    if (className) {
-      classNames.push(className)
-    }
+// Buttons can allow all attributes of <button> element
+interface ButtonInputProps
+  extends ButtonBaseProps, React.ComponentPropsWithRef<'button'> {
+  href?: undefined // Error if `href` is provided to buttons
+}
 
-    // If `href` is present, return an anchor element.
-    if (href) {
-      return (
-        <a
-          ref={ref as React.Ref<HTMLAnchorElement>}
-          href={href}
-          className={classNames.join(' ')}
-          {...props}
-        >
-          {children}
-        </a>
-      )
-    }
+// ...or buttons can allow all attributes of <a> element
+interface ButtonLinkProps
+  extends ButtonBaseProps, React.ComponentPropsWithRef<'a'> {
+  type: 'link'
+  href: string
+}
 
-    // Otherwise, use a button element.
+// Button is either <button> or <a>, discriminated by `type` prop if present
+type ButtonProps = ButtonInputProps | ButtonLinkProps
+
+export function Button(props: ButtonProps) {
+  const classNames = ['btn']
+  const { primary, secondary, tertiary, className, ...restProps } = props
+  if (primary) {
+    classNames.push('btn-primary')
+  }
+  if (secondary) {
+    classNames.push('btn-secondary')
+  }
+  if (tertiary) {
+    classNames.push('btn-tertiary')
+  }
+  if (className) {
+    classNames.push(className)
+  }
+
+  // If Button type is intended to be a link, return an anchor element.
+  if (restProps.type === 'link') {
+    const { ref, type, href, children, ...moreProps } = restProps
     return (
-      <button
-        ref={ref as React.Ref<HTMLButtonElement>}
-        type={type}
-        className={classNames.join(' ')}
-        {...props}
-      >
+      <a ref={ref} href={href} className={classNames.join(' ')} {...moreProps}>
         {children}
-      </button>
+      </a>
     )
   }
-)
 
-Button.displayName = 'Button'
-
-export default Button
+  // Otherwise, use a button element.
+  const { ref, type = 'button', children, ...moreProps } = restProps
+  return (
+    <button
+      ref={ref}
+      type={type}
+      className={classNames.join(' ')}
+      {...moreProps}
+    >
+      {children}
+    </button>
+  )
+}

@@ -1,10 +1,10 @@
-import React, { useId } from 'react'
+import { useId } from 'react'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import type { SwitchProps } from '@radix-ui/react-switch'
 
 import './Switch.css'
 
-function Switch (props: SwitchProps): React.ReactElement {
+export function Switch(props: SwitchProps) {
   const { className, children, ...restProps } = props
 
   // Generate an `id` to associate a `label` with an `input` element.
@@ -28,5 +28,3 @@ function Switch (props: SwitchProps): React.ReactElement {
     </div>
   )
 }
-
-export default Switch

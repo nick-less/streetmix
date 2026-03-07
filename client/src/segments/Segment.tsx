@@ -1,37 +1,39 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import { useDrag, useDrop } from 'react-dnd'
+import { getSegmentInfo } from '@streetmix/parts'
 
-import { useSelector, useDispatch } from '~/src/store/hooks'
-import { PopupContainer } from '~/src/info_bubble/PopupContainer'
-import EmptyDragPreview from '~/src/ui/dnd/EmptyDragPreview'
-import { usePrevious } from '~/src/util/usePrevious'
-import { setActiveSegment } from '../store/slices/ui'
+import { useSelector, useDispatch } from '~/src/store/hooks.js'
+import { PopupContainer } from '~/src/info_bubble/PopupContainer.js'
+import { EmptyDragPreview } from '~/src/ui/dnd/EmptyDragPreview.js'
+import { usePrevious } from '~/src/util/usePrevious.js'
+import { setActiveSegment } from '../store/slices/ui.js'
 import {
   incrementSegmentWidth,
   removeSegmentAction,
-  clearSegmentsAction
-} from '../store/actions/street'
-import { getSegmentCapacity } from './capacity'
-import { getLocaleSegmentName } from './view'
-import SegmentCanvas from './SegmentCanvas'
-import SegmentDragHandles from './SegmentDragHandles'
-import SegmentLabelContainer from './SegmentLabelContainer'
-
+  clearSegmentsAction,
+} from '../store/actions/street.js'
+import { getSegmentCapacity } from './capacity.js'
+import { getLocaleSliceName } from './labels.js'
+import { SegmentCanvas } from './SegmentCanvas.js'
+import { SegmentDragHandles } from './SegmentDragHandles.js'
+import { SegmentLabelContainer } from './SegmentLabelContainer.js'
 import {
   TILE_SIZE,
   SLICE_WARNING_OUTSIDE,
   SLICE_WARNING_WIDTH_TOO_SMALL,
   SLICE_WARNING_WIDTH_TOO_LARGE,
-  SLICE_WARNING_SLOPE_EXCEEDED_BERM
-} from './constants'
-import { createSliceDragSpec, createSliceDropTargetSpec } from './drag_and_drop'
-import { getSegmentInfo } from './info'
-import { RESIZE_TYPE_INCREMENT } from './resizing'
-import TestSlope from './TestSlope'
+  SLICE_WARNING_SLOPE_EXCEEDED_BERM,
+  SLICE_WARNING_SLOPE_EXCEEDED_PATH,
+} from './constants.js'
+import {
+  createSliceDragSpec,
+  createSliceDropTargetSpec,
+} from './drag_and_drop.js'
+import { RESIZE_TYPE_INCREMENT } from './resizing.js'
+import { TestSlope } from './TestSlope.js'
 import './Segment.css'
 
-import { calculateSlope } from './slope'
 import type { SliceItem, UnitsSetting } from '@streetmix/types'
 
 interface SliceProps {
@@ -41,7 +43,7 @@ interface SliceProps {
   segmentLeft: number
 }
 
-function Segment (props: SliceProps): React.ReactNode {
+export function Segment(props: SliceProps) {
   const { sliceIndex, segment, units, segmentLeft } = props
   const [switchSegments, setSwitchSegments] = useState(false)
   const [oldVariant, setOldVariant] = useState<string>(segment.variantString)
@@ -52,11 +54,11 @@ function Segment (props: SliceProps): React.ReactNode {
   )
   const locale = useSelector((state) => state.locale.locale)
   const activeSegment = useSelector((state) => state.ui.activeSegment)
+  const readOnly = useSelector((state) => state.app.readOnly)
   const infoBubbleHovered = useSelector((state) => state.infoBubble.mouseInside)
-  const coastmixMode = useSelector((state) => state.flags.COASTMIX_MODE.value)
   const dispatch = useDispatch()
 
-  const streetSegment = useRef<HTMLDivElement>(null)
+  const elementRef = useRef<HTMLDivElement>(null)
   const dndRef = useRef<HTMLDivElement>(null)
 
   // These refs are a workaround for CSSTransition's dependence on
@@ -66,9 +68,9 @@ function Segment (props: SliceProps): React.ReactNode {
 
   // Set up drag and drop targets
   // Specs are created on each render with changed props
-  const dropSpec = createSliceDropTargetSpec(props, streetSegment)
-  const [collectedProps, drop] = useDrop(dropSpec)
-  const dragSpec = createSliceDragSpec(props)
+  const dropSpec = createSliceDropTargetSpec(sliceIndex, segment, elementRef)
+  const [, drop] = useDrop(dropSpec)
+  const dragSpec = createSliceDragSpec(sliceIndex, segment)
   const [collected, drag, dragPreview] = useDrag(dragSpec)
   const { isDragging }: { isDragging: boolean } = collected
   drag(drop(dndRef))
@@ -76,7 +78,7 @@ function Segment (props: SliceProps): React.ReactNode {
   // Keep previous state for comparisons (ported from legacy behavior)
   const prevProps = usePrevious({
     segment,
-    isDragging
+    isDragging,
   })
 
   useEffect(() => {
@@ -121,7 +123,8 @@ function Segment (props: SliceProps): React.ReactNode {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent): void => {
       // Bail if hovered over infobubble popup
-      if (infoBubbleHovered) return
+      // or in read-only mode
+      if (readOnly || infoBubbleHovered) return
 
       switch (event.key) {
         case '-':
@@ -153,7 +156,14 @@ function Segment (props: SliceProps): React.ReactNode {
           break
       }
     },
-    [decrementWidth, incrementWidth, sliceIndex, infoBubbleHovered, dispatch]
+    [
+      decrementWidth,
+      incrementWidth,
+      sliceIndex,
+      infoBubbleHovered,
+      dispatch,
+      readOnly,
+    ]
   )
 
   // Cleanup effect
@@ -167,7 +177,7 @@ function Segment (props: SliceProps): React.ReactNode {
 
   // When called by CSSTransition `onExited`, `oldVariant` is not passed to the
   // function (is undefined). `switchSegments` should be `true` when this happens.
-  function handleSwitchSegments (oldVariant?: string): void {
+  function handleSwitchSegments(oldVariant?: string) {
     setSwitchSegments(!switchSegments)
     if (switchSegments) {
       setOldVariant(segment.variantString)
@@ -179,31 +189,23 @@ function Segment (props: SliceProps): React.ReactNode {
     }
   }
 
-  function handleSegmentMouseEnter (): void {
+  function handleSegmentMouseEnter() {
+    if (readOnly) return
     dispatch(setActiveSegment(sliceIndex))
     document.addEventListener('keydown', handleKeyDown)
   }
 
-  function handleSegmentMouseLeave (): void {
+  function handleSegmentMouseLeave() {
+    if (readOnly) return
     dispatch(setActiveSegment(null))
     document.removeEventListener('keydown', handleKeyDown)
   }
 
-  function renderSegmentCanvas (
+  function renderSegmentCanvas(
     variantType: string,
     nodeRef: React.RefObject<HTMLDivElement | null>
-  ): React.ReactNode {
+  ) {
     const isOldVariant = variantType === 'old'
-
-    const slopeData = calculateSlope(street, sliceIndex)
-    const elevationChange = {
-      left: segment.elevation,
-      right: segment.elevation
-    }
-    if (segment.slope && slopeData !== null) {
-      elevationChange.left = slopeData.leftElevation
-      elevationChange.right = slopeData.rightElevation
-    }
 
     return (
       <div ref={nodeRef} style={{ width: '100%', height: '100%' }}>
@@ -215,9 +217,8 @@ function Segment (props: SliceProps): React.ReactNode {
           // and can be used as a consistent and reliable seed for a PRNG
           randSeed={segment.id}
           elevation={segment.elevation}
-          slope={elevationChange}
+          slope={segment.slope}
         />
-        {coastmixMode && <TestSlope slice={segment} />}
       </div>
     )
   }
@@ -227,7 +228,7 @@ function Segment (props: SliceProps): React.ReactNode {
   // Get localized names from store, fall back to segment default names if
   // translated text is not found. TODO: port to react-intl/formatMessage later.
   const displayName =
-    segment.label ?? getLocaleSegmentName(segment.type, segment.variantString)
+    segment.label ?? getLocaleSliceName(segment.type, segment.variantString)
 
   const average = getSegmentCapacity(segment, street.capacitySource)?.average
   const elementWidth = segment.width * TILE_SIZE
@@ -235,7 +236,7 @@ function Segment (props: SliceProps): React.ReactNode {
   const segmentStyle = {
     width: elementWidth + 'px',
     zIndex: segmentInfo.zIndex,
-    transform: `translateX(${segmentLeft}px)`
+    transform: `translateX(${segmentLeft}px)`,
   }
 
   const classNames = ['segment']
@@ -247,12 +248,12 @@ function Segment (props: SliceProps): React.ReactNode {
   }
 
   // Warnings
-  // TODO: implement SLICE_WARNING_SLOPE_EXCEEDED_PATH
   if (
     segment.warnings[SLICE_WARNING_OUTSIDE] ||
     segment.warnings[SLICE_WARNING_WIDTH_TOO_SMALL] ||
     segment.warnings[SLICE_WARNING_WIDTH_TOO_LARGE] ||
-    segment.warnings[SLICE_WARNING_SLOPE_EXCEEDED_BERM]
+    segment.warnings[SLICE_WARNING_SLOPE_EXCEEDED_BERM] ||
+    segment.warnings[SLICE_WARNING_SLOPE_EXCEEDED_PATH]
   ) {
     classNames.push('warning')
   }
@@ -265,7 +266,7 @@ function Segment (props: SliceProps): React.ReactNode {
       style={segmentStyle}
       className={classNames.join(' ')}
       data-testid="segment"
-      ref={streetSegment}
+      ref={elementRef}
       onMouseEnter={handleSegmentMouseEnter}
       onMouseLeave={handleSegmentMouseLeave}
     >
@@ -273,8 +274,9 @@ function Segment (props: SliceProps): React.ReactNode {
         type="slice"
         position={sliceIndex}
         isDragging={isDragging}
+        disabled={readOnly}
       >
-        <button data-slice-index={sliceIndex}>
+        <button data-slice-index={sliceIndex} data-slice-left={segmentLeft}>
           <SegmentLabelContainer
             label={displayName}
             width={segment.width}
@@ -307,6 +309,7 @@ function Segment (props: SliceProps): React.ReactNode {
               {renderSegmentCanvas('new', newRef)}
             </CSSTransition>
           </div>
+          <TestSlope slice={segment} />
           <div className="active-bg" />
           <EmptyDragPreview dragPreview={dragPreview} />
         </button>
@@ -314,5 +317,3 @@ function Segment (props: SliceProps): React.ReactNode {
     </div>
   )
 }
-
-export default Segment

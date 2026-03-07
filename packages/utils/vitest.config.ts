@@ -1,4 +1,3 @@
-/// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -6,8 +5,6 @@ export default defineConfig({
     name: '@streetmix/utils',
     globals: true,
     environment: 'node',
-    // TypeScript still checks/builds *.test.ts files, but we don't
-    // need to actually run tests on the compiled files.
     exclude: ['build']
   }
 })

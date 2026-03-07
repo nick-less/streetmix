@@ -1,27 +1,28 @@
 import clone from 'just-clone'
 
-import { ERRORS } from '../../app/errors'
-import { formatMessage } from '../../locales/locale'
+import { ERRORS } from '~/src/app/errors.js'
+import { formatMessage } from '~/src/locales/locale.js'
 import {
   RESIZE_TYPE_INCREMENT,
   RESIZE_TYPE_PRECISE_DRAGGING,
   resolutionForResizeType,
   normalizeSegmentWidth,
-  cancelSegmentResizeTransitions
-} from '../../segments/resizing'
-import { getVariantInfo } from '../../segments/variant_utils'
+  cancelSegmentResizeTransitions,
+} from '~/src/segments/resizing.js'
+import { getSlopeValues } from '~/src/segments/slope.js'
+import { getVariantInfo } from '~/src/segments/variant_utils.js'
 import {
   setIgnoreStreetChanges,
   setLastStreet,
-  saveStreetToServerIfNecessary
-} from '../../streets/data_model'
-import { applyWarningsToSlices } from '../../streets/warnings'
-import { recalculateWidth } from '../../streets/width'
-import { saveStreetToServer } from '../../streets/xhr'
-import apiClient from '../../util/api'
-import { showError } from '../slices/errors'
-import { updateSettings } from '../slices/settings'
-import { addToast } from '../slices/toasts'
+  saveStreetToServerIfNecessary,
+} from '~/src/streets/data_model.js'
+import { applyWarningsToSlices } from '~/src/streets/warnings.js'
+import { recalculateWidth } from '~/src/streets/width.js'
+import { saveStreetToServer } from '~/src/streets/xhr.js'
+import apiClient from '~/src/util/api.js'
+import { showError } from '../slices/errors.js'
+import { updateSettings } from '../slices/settings.js'
+import { addToast } from '../slices/toasts.js'
 import {
   updateStreetWidth,
   updateSegments,
@@ -32,13 +33,17 @@ import {
   updateShowAnalytics,
   updateCapacitySource,
   saveStreetId,
-  saveOriginalStreetId
-} from '../slices/street'
-import { setInfoBubbleMouseInside } from '../slices/infoBubble'
-import { setActiveSegment } from '../slices/ui'
+  saveOriginalStreetId,
+} from '../slices/street.js'
+import { setInfoBubbleMouseInside } from '../slices/infoBubble.js'
+import { setActiveSegment } from '../slices/ui.js'
 
-import type { Dispatch, RootState } from '../index'
-import type { StreetState } from '@streetmix/types'
+import type { Dispatch, RootState } from '../index.js'
+import type {
+  SliceItem,
+  StreetAPIResponse,
+  StreetState,
+} from '@streetmix/types'
 
 /**
  * updateStreetWidth as a thunk action that automatically
@@ -46,18 +51,47 @@ import type { StreetState } from '@streetmix/types'
  *
  * @param width
  */
-export function updateStreetWidthAction (width: number) {
-  return async (dispatch: Dispatch, getState: () => RootState) => {
+export function updateStreetWidthAction(width: number) {
+  return async (dispatch: Dispatch) => {
     await dispatch(updateStreetWidth(width))
     await dispatch(segmentsChanged())
   }
 }
 
-export const segmentsChanged = () => {
+export const segmentsChanged = (force = false) => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
-    const street = getState().street
+    const { street } = getState()
+
     const calculatedWidths = recalculateWidth(street)
-    const updatedSlices = applyWarningsToSlices(street, calculatedWidths)
+
+    // Original slices state is read-only, so we need to clone it to modify
+    // and update its properties.
+    const clonedSlices: SliceItem[] = street.segments.map((slice, index) => {
+      // Calculate slope values, if needed
+      let slopeValues: number[] = []
+      if (slice.slope?.on) {
+        slopeValues = getSlopeValues(street, index)
+      }
+
+      return {
+        // This shallow-copies the original data, which is generally fine
+        // for everything but two properties
+        ...slice,
+        // This will be appended to by `applyWarningsToSlices`
+        warnings: [false],
+        // This will be modified by slope calculation
+        slope: {
+          on: slice.slope?.on ?? false,
+          values: slopeValues,
+        },
+      }
+    })
+
+    const updatedSlices = applyWarningsToSlices(
+      clonedSlices,
+      street,
+      calculatedWidths
+    )
 
     await dispatch(
       updateSegments(
@@ -66,13 +100,16 @@ export const segmentsChanged = () => {
         calculatedWidths.remainingWidth.toNumber()
       )
     )
+
     // ToDo: Refactor this out to be dispatched as well
-    saveStreetToServerIfNecessary()
+    // Forcing a save is necessary when the data to be saved is not in the
+    // street data blob (e.g. plugins data)
+    saveStreetToServerIfNecessary(force)
   }
 }
 
 export const removeSegmentAction = (segmentIndex: number) => {
-  return async (dispatch: Dispatch, getState: () => RootState) => {
+  return async (dispatch: Dispatch) => {
     await dispatch(removeSegment(segmentIndex, false))
     await dispatch(segmentsChanged())
 
@@ -86,14 +123,14 @@ export const removeSegmentAction = (segmentIndex: number) => {
           'toast.segment-deleted',
           'The segment has been removed.'
         ),
-        component: 'TOAST_UNDO'
+        component: 'TOAST_UNDO',
       })
     )
   }
 }
 
 export const clearSegmentsAction = () => {
-  return async (dispatch: Dispatch, getState: () => RootState) => {
+  return async (dispatch: Dispatch) => {
     await dispatch(clearSegments())
     await dispatch(segmentsChanged())
 
@@ -107,21 +144,21 @@ export const clearSegmentsAction = () => {
           'toast.all-segments-deleted',
           'All segments have been removed.'
         ),
-        component: 'TOAST_UNDO'
+        component: 'TOAST_UNDO',
       })
     )
   }
 }
 
 export const setShowAnalytics = (isVisible: boolean) => {
-  return async (dispatch: Dispatch, getState: () => RootState) => {
+  return async (dispatch: Dispatch) => {
     await dispatch(updateShowAnalytics(isVisible))
     await dispatch(segmentsChanged())
   }
 }
 
 export const setCapacitySource = (source: string) => {
-  return async (dispatch: Dispatch, getState: () => RootState) => {
+  return async (dispatch: Dispatch) => {
     await dispatch(updateCapacitySource(source))
     await dispatch(segmentsChanged())
   }
@@ -175,14 +212,10 @@ export const incrementSegmentWidth = (
   }
 }
 
-const createStreetFromResponse = (response: {
-  data: { street: StreetState }
-  creatorId?: string
-  originalStreetId?: string
-  updatedAt?: string
-  name?: string
-}): StreetState => {
-  const street = clone(response.data.street)
+const createStreetFromResponse = (response: StreetAPIResponse): StreetState => {
+  // This is where the response format gets flattened for Redux state
+  // Not sure if we have to do all this, tbh...
+  const street = clone(response.data.street) as StreetState
   street.creatorId = response.creatorId || null
   street.originalStreetId = response.originalStreetId || null
   street.updatedAt = response.updatedAt || undefined
@@ -203,6 +236,9 @@ export const getLastStreet = () => {
   return async (dispatch: Dispatch, getState: () => RootState) => {
     const lastStreetId = getState().app.priorLastStreetId
     const { id, namespacedId } = getState().street
+
+    if (!lastStreetId) return
+
     try {
       const response = await apiClient.getStreet(lastStreetId)
       const data = response.data
@@ -212,7 +248,7 @@ export const getLastStreet = () => {
         updateSettings({
           lastStreetId: data.id,
           lastStreetNamespacedId: data.namespacedId,
-          lastStreetCreatorId: street.creatorId
+          lastStreetCreatorId: street.creatorId,
         })
       )
       dispatch(updateStreetData(street))

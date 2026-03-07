@@ -2,7 +2,7 @@ import { Router } from 'express'
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import * as v1 from './resources/v1/index.js'
-import { BTPTokenCheck } from './resources/services/integrations/coil.js'
+import { BTPTokenCheck } from './resources/services/integrations/coil.ts'
 import jwtCheck from './authentication.js'
 
 // Base path of router is `/api` (see app.js)
@@ -66,54 +66,9 @@ const router = Router()
  *   GeolocationResponse:
  *     type: object
  *     properties:
- *       ip:
- *         type: string
- *       type:
- *         type: string
- *         example: "ipv4"
- *       continent_code:
- *         type: string
- *         example: "NA"
- *       continent_name:
- *         type: string
- *         example: "North America"
- *       country_code:
+ *       countryCode:
  *         type: string
  *         example: "US"
- *       country_name:
- *         type: string
- *         example: "United States"
- *       region_code:
- *         type: string
- *         example: "NY"
- *       region_name:
- *         type: string
- *         example: "New York"
- *       city:
- *         type: string
- *         example: "Astoria"
- *       zip:
- *         type: string
- *         example: "11106"
- *       latitude:
- *         type: number
- *         format: float
- *       longitude:
- *         type: number
- *         format: float
- *       location:
- *         type: object
- *         properties:
- *           geoname_id:
- *             type: integer
- *             example: 5107464
- *           capital:
- *             type: string
- *             example: "Washington D.C."
- *           languages:
- *             type: array
- *             items:
- *               $ref: '#/definitions/Language'
  *   StreetImageData:
  *     type: object
  *     properties:
@@ -167,6 +122,8 @@ const router = Router()
  *             type: boolean
  *           skybox:
  *             type: string
+ *           weather:
+ *             type: string | null
  *           leftBuildingHeight:
  *             type: string
  *           rightBuildingHeight:

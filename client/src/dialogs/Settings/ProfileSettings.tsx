@@ -1,18 +1,18 @@
-import React, { useState, useRef, useId } from 'react'
+import { useState, useRef, useId } from 'react'
 import { FormattedMessage, useIntl } from 'react-intl'
 
-import { useSelector, useDispatch } from '~/src/store/hooks'
-import { updateDisplayName } from '~/src/store/slices/user'
-import Button from '~/src/ui/Button'
-import LoadingSpinner from '~/src/ui/LoadingSpinner'
-import Popover from '~/src/ui/Popover'
-import { patchUser } from '~/src/util/api'
+import { useSelector, useDispatch } from '~/src/store/hooks.js'
+import { updateDisplayName } from '~/src/store/slices/user.js'
+import { Button } from '~/src/ui/Button.js'
+import LoadingSpinner from '~/src/ui/LoadingSpinner.js'
+import { Popover } from '~/src/ui/Popover.js'
+import { patchUser } from '~/src/util/api.js'
 import './ProfileSettings.css'
 
 const DISPLAY_NAME_MAX_CHARS = 30
 const DISPLAY_NAME_MAX_CHARS_WARN = DISPLAY_NAME_MAX_CHARS - 10
 
-function ProfileSettings (): React.ReactElement | null {
+export function ProfileSettings() {
   const user = useSelector((state) => state.user.signInData?.details)
   const [displayNameValue, setDisplayNameValue] = useState(
     user?.displayName ?? user?.id ?? ''
@@ -26,7 +26,7 @@ function ProfileSettings (): React.ReactElement | null {
   const intl = useIntl()
   const dispatch = useDispatch()
 
-  function handleEditDisplayName (): void {
+  function handleEditDisplayName() {
     setEditing(true)
 
     // Focuses the input and selects it if has the default username
@@ -41,18 +41,16 @@ function ProfileSettings (): React.ReactElement | null {
     }, 0)
   }
 
-  function handleResetDisplayName (): void {
+  function handleResetDisplayName() {
     setEditing(false)
     setDisplayNameValue(user?.displayName ?? user?.id ?? '')
   }
 
-  function handleChangeDisplayName (
-    event: React.ChangeEvent<HTMLInputElement>
-  ): void {
+  function handleChangeDisplayName(event: React.ChangeEvent<HTMLInputElement>) {
     setDisplayNameValue(event.target.value)
   }
 
-  async function handleSaveDisplayName (): Promise<void> {
+  async function handleSaveDisplayName() {
     setPending(true)
 
     if (user === undefined) return
@@ -86,7 +84,7 @@ function ProfileSettings (): React.ReactElement | null {
     }
   }
 
-  function handleSubmit (event: React.FormEvent): void {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     handleSaveDisplayName()
   }
@@ -109,11 +107,11 @@ function ProfileSettings (): React.ReactElement | null {
         {
           id: 'settings.profile.display-name-characters-remaining',
           defaultMessage:
-            'Characters remaining: {currentNum} ({maxNum} maximum)'
+            'Characters remaining: {currentNum} ({maxNum} maximum)',
         },
         {
           currentNum: DISPLAY_NAME_MAX_CHARS - displayNameValue.length,
-          maxNum: DISPLAY_NAME_MAX_CHARS
+          maxNum: DISPLAY_NAME_MAX_CHARS,
         }
       )
     )
@@ -122,7 +120,7 @@ function ProfileSettings (): React.ReactElement | null {
     messages.push(
       intl.formatMessage({
         id: 'settings.profile..display-name-error',
-        defaultMessage: 'Display name could not be saved'
+        defaultMessage: 'Display name could not be saved',
       })
     )
   }
@@ -175,7 +173,7 @@ function ProfileSettings (): React.ReactElement | null {
             />
           </Popover>
         </h3>
-        {/* eslint-disable-next-line */}
+
         {isEditing ? (
           <div className="profile-settings-editable">
             <form onSubmit={handleSubmit}>
@@ -241,5 +239,3 @@ function ProfileSettings (): React.ReactElement | null {
     </section>
   )
 }
-
-export default ProfileSettings

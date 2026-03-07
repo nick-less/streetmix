@@ -1,14 +1,13 @@
-import React from 'react'
 import { vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
-import { render } from '~/test/helpers/render'
-import UndoRedo from './UndoRedo'
+import { render } from '~/test/helpers/render.js'
+import { UndoRedo } from './UndoRedo.js'
 
 // For the purposes of this test suite, assume user owns the street
-vi.mock('../streets/owner', () => ({
-  isOwnedByCurrentUser: () => true
+vi.mock('../streets/owner.js', () => ({
+  isOwnedByCurrentUser: () => true,
 }))
 
 // Note: "default" render snapshot is covered by a test on the parent
@@ -19,17 +18,17 @@ describe('UndoRedo', () => {
       initialState: {
         history: {
           stack: [{ foo: 'bar' }, { foo: 'baz' }],
-          position: 1
-        }
-      }
+          position: 1,
+        },
+      },
     })
 
     // Click the undo button
-    await userEvent.click(screen.getByTestId('undo'))
+    await userEvent.click(screen.getByLabelText('Undo'))
 
     // Redo should now be available, but undo is not.
-    expect(screen.getByTestId('undo')).toBeDisabled()
-    expect(screen.getByTestId('redo')).toBeEnabled()
+    expect(screen.getByLabelText('Undo')).toBeDisabled()
+    expect(screen.getByLabelText('Redo')).toBeEnabled()
   })
 
   it('handles clicking redo button', async () => {
@@ -37,17 +36,17 @@ describe('UndoRedo', () => {
       initialState: {
         history: {
           stack: [{ foo: 'bar' }, { foo: 'baz' }],
-          position: 0
-        }
-      }
+          position: 0,
+        },
+      },
     })
 
     // Expect the undo position to increment when redo button is clicked
     // Click the redo button
-    await userEvent.click(screen.getByTestId('redo'))
+    await userEvent.click(screen.getByLabelText('Redo'))
 
     // Undo should now be available, but redo is not.
-    expect(screen.getByTestId('undo')).toBeEnabled()
-    expect(screen.getByTestId('redo')).toBeDisabled()
+    expect(screen.getByLabelText('Undo')).toBeEnabled()
+    expect(screen.getByLabelText('Redo')).toBeDisabled()
   })
 })

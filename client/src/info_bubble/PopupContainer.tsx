@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useRef, useState, cloneElement } from 'react'
 import {
   useFloating,
   autoUpdate,
@@ -17,80 +17,95 @@ import {
   FloatingDelayGroup,
   FloatingPortal,
   FloatingArrow,
-  FloatingNode
+  FloatingNode,
 } from '@floating-ui/react'
 
-import { useSelector } from '~/src/store/hooks'
-import { PopupContent } from './PopupContent'
+import { useSelector } from '~/src/store/hooks.js'
+import { PopupContent } from './PopupContent.js'
 import './PopupContainer.css'
 
 import type { FloatingDelayGroupProps } from '@floating-ui/react'
-import type { Optional, SectionElementTypeAndPosition } from '@streetmix/types'
+import type {
+  Optional,
+  Prettify,
+  SectionElementTypeAndPosition,
+} from '@streetmix/types'
 
 // Default settings
 const POPUP_DELAY = {
   open: 0,
-  close: 150
+  close: 150,
 }
 const POPUP_DELAY_TIMEOUT = 500
 const POPUP_TRANSITION_DURATION = 150
 const ARROW_WIDTH = 32
 const ARROW_HEIGHT = 16
 
-type PopupContainerProps = SectionElementTypeAndPosition & {
-  isDragging: boolean
-  children: React.ReactElement
-}
+type PopupContainerProps = Prettify<
+  SectionElementTypeAndPosition & {
+    isDragging?: boolean
+    disabled?: boolean
+    children: React.JSX.Element
+  }
+>
 
-export function PopupContainer ({
-  type,
-  position,
+// `...props` is a discriminated union of `SectionElementTypeAndPosition`,
+// do not destructure it or it will lose type safety!
+export function PopupContainer({
   isDragging,
-  children
-}: PopupContainerProps): React.ReactNode {
+  disabled = false,
+  children,
+  ...props
+}: PopupContainerProps) {
   const element = useSelector((state) => {
-    if (type === 'boundary') {
-      return state.street.boundary[position]
+    if (props.type === 'boundary') {
+      return state.street.boundary[props.position]
     } else {
-      return state.street.segments[position]
+      return state.street.segments[props.position]
     }
   })
   const [isOpen, setIsOpen] = useState(false)
   const [isArrowHighlighted, setArrowHighlighted] = useState(false)
-  const arrowRef = React.useRef(null)
+  const arrowRef = useRef(null)
   const nodeId = useFloatingNodeId()
   const { refs, floatingStyles, context, middlewareData } = useFloating({
     nodeId,
-    open: isOpen && !isDragging,
+    open: isOpen && !isDragging && !disabled,
     onOpenChange: setIsOpen,
     placement: 'top',
     whileElementsMounted: autoUpdate,
     middleware: [
       shift({
         crossAxis: true,
+        // Set boundary area for where the popup can appear.
+        // CSS controls the top position of this boundary.
+        boundary: document.querySelector('#street-section-popup-boundary'),
         padding: {
           right: 20,
           left: 20,
-          top: 130 // minimum distance from top of viewport
-        }
+        },
       }),
       arrow({
         element: arrowRef,
-        padding: 20
-      })
-    ]
+        padding: 20,
+      }),
+    ],
   })
   const { delay, currentId, isInstantPhase } = useDelayGroup(context)
   const hover = useHover(context, {
     delay,
     mouseOnly: true,
-    // ISN'T WORKING? HOW DO DEUBG?
     handleClose: safePolygon({
+      // This needs to be on or the `safePolygon` doesn't work
       blockPointerEvents: true,
-      buffer: -Infinity
-      // requireIntent: false
-    })
-  }) // TODO: disable hover from closing
+      // This can be tweaked to a comfortable buffer. If it's too high, then
+      // moving the mouse to an adjacent reference element would block new
+      // popups from appearing, because `requireIntent` is false (below)
+      buffer: 25,
+      // Allows for some slower moving mouse cursors
+      requireIntent: false,
+    }),
+  })
   const click = useClick(context)
   const focus = useFocus(context)
   const dismiss = useDismiss(context)
@@ -98,7 +113,7 @@ export function PopupContainer ({
     hover,
     click,
     focus,
-    dismiss
+    dismiss,
   ])
 
   const arrowX = middlewareData.arrow?.x ?? 0
@@ -112,21 +127,26 @@ export function PopupContainer ({
       ? {
           open: 0,
           close:
-            currentId === context.floatingId ? POPUP_TRANSITION_DURATION : 0
+            currentId === context.floatingId ? POPUP_TRANSITION_DURATION : 0,
         }
       : POPUP_TRANSITION_DURATION,
     initial: ({ side }) => ({
       opacity: 0,
-      transform: 'rotateX(-80deg)'
+      transform: {
+        top: 'rotateX(-80deg)',
+        bottom: 'rotateX(80deg)',
+        left: 'rotateY(-80deg)',
+        right: 'rotateY(80deg)',
+      }[side],
     }),
     common: ({ side }) => ({
       transformOrigin: {
         top: `${transformX}px calc(100% + ${ARROW_HEIGHT}px)`,
         bottom: `${transformX}px ${-ARROW_HEIGHT}px`,
         left: `calc(100% + ${ARROW_HEIGHT}px) ${transformY}px`,
-        right: `${-ARROW_HEIGHT}px ${transformY}px`
-      }[side]
-    })
+        right: `${-ARROW_HEIGHT}px ${transformY}px`,
+      }[side],
+    }),
   })
 
   // We clone the child element so we can apply floating-ui's props
@@ -141,16 +161,12 @@ export function PopupContainer ({
   // <button> also works just fine as is) but if this becomes too complex,
   // a future workaround is to use floating-ui's `asChild` pattern so that
   // some instances can be wrapped with its own element.
-  const tooltipTriggerElement = React.cloneElement(
+  const tooltipTriggerElement = cloneElement(
     children,
     getReferenceProps({
       // Refs are merged between useFloating and an existing child ref, if any.
-      ref: useMergeRefs([
-        refs.setReference,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (children as any).ref
-      ]),
-      ...children.props
+      ref: useMergeRefs([refs.setReference, children.ref]),
+      ...children.props,
     })
   )
 
@@ -179,9 +195,8 @@ export function PopupContainer ({
               {element && (
                 <div className="popup-container" style={styles}>
                   <PopupContent
-                    type={type}
-                    position={position}
                     setArrowHighlighted={setArrowHighlighted}
+                    {...props}
                   />
                   <FloatingArrow
                     className={arrowClassNames.join(' ')}
@@ -202,14 +217,16 @@ export function PopupContainer ({
 
 // PopupContainerGroupProps takes all of FloatingDelayGroupProps except that
 // `delay` is now optional because we provide our own default value
-type PopupContainerGroupProps = Optional<FloatingDelayGroupProps, 'delay'>
+type PopupContainerGroupProps = Prettify<
+  Optional<FloatingDelayGroupProps, 'delay'>
+>
 
 // Re-exports <FloatingDelayGroup> with our own default values. It can be
 // overridden by props.
-export function PopupContainerGroup ({
+export function PopupContainerGroup({
   children,
   ...props
-}: PopupContainerGroupProps): React.ReactNode {
+}: PopupContainerGroupProps) {
   return (
     <FloatingDelayGroup
       delay={POPUP_DELAY}

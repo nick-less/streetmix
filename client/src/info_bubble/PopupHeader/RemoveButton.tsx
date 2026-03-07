@@ -1,49 +1,46 @@
-import React, { type MouseEvent } from 'react'
+import { type MouseEvent } from 'react'
 import { FormattedMessage, useIntl } from 'react-intl'
 
-import { useDispatch } from '~/src/store/hooks'
+import { useDispatch } from '~/src/store/hooks.js'
 import {
   removeSegmentAction,
-  clearSegmentsAction
-} from '~/src/store/actions/street'
-import Button from '~/src/ui/Button'
-import Icon from '~/src/ui/Icon'
+  clearSegmentsAction,
+} from '~/src/store/actions/street.js'
+import { Button } from '~/src/ui/Button.js'
+import Icon from '~/src/ui/Icon.js'
 import './RemoveButton.css'
 
 interface RemoveButtonProps {
-  segment: number
+  readonly slice: number
 }
 
-export function RemoveButton ({
-  segment
-}: RemoveButtonProps): React.ReactElement {
+export function RemoveButton({ slice }: RemoveButtonProps) {
   const dispatch = useDispatch()
   const intl = useIntl()
 
-  const handleClick = (event: MouseEvent): void => {
-    // Prevent this “leaking” to a segment below
+  const handleClick = (event: MouseEvent) => {
+    // Prevent this “leaking” to a slice below
     event.preventDefault()
 
-    // Power move: a shift key will remove all segments
+    // Power move: a shift key will remove all slices
     if (event.shiftKey) {
       dispatch(clearSegmentsAction())
     } else {
-      // Otherwise, remove one segment
-      dispatch(removeSegmentAction(segment))
+      // Otherwise, remove one slice
+      dispatch(removeSegmentAction(slice))
     }
   }
 
   return (
     <Button
       className="popup-slice-remove"
-      tabIndex={-1}
       title={intl.formatMessage({
         id: 'tooltip.remove-segment',
-        defaultMessage: 'Remove segment'
+        defaultMessage: 'Remove segment',
       })}
       onClick={handleClick}
     >
-      <Icon name="trash" className="remove-icon" />
+      <Icon name="trash" size="18" className="remove-icon" />
       <FormattedMessage id="btn.remove" defaultMessage="Remove" />
     </Button>
   )

@@ -8,9 +8,11 @@ import { drawEarth } from './earth.js'
 import { drawLabelBackground, drawLabels } from './labels.js'
 import { drawNameplate } from './nameplate.js'
 import { drawSky } from './sky.js'
+import { drawSlices } from './slices.js'
 import { drawWatermark } from './watermark.js'
 
-import type { Street, StreetImageOptions } from '@streetmix/types'
+import type { StreetAPIResponse } from '@streetmix/types'
+import type { StreetImageExportOptions } from './index.js'
 
 // Register fonts
 // We will not be using variable fonts here because canvas support doesn't
@@ -18,20 +20,14 @@ import type { Street, StreetImageOptions } from '@streetmix/types'
 Canvas.GlobalFonts.registerFromPath(
   path.join(
     import.meta.dirname,
-    '../../../node_modules/@fontsource/rubik/files/rubik-latin-400-normal.woff2'
-  ),
-  'Rubik'
-)
-Canvas.GlobalFonts.registerFromPath(
-  path.join(
-    import.meta.dirname,
-    '../../../node_modules/@fontsource/rubik/files/rubik-latin-600-normal.woff2'
+    '../../../node_modules/@fontsource-variable/rubik/files/rubik-latin-wght-normal.woff2'
   ),
   'Rubik'
 )
 
 // Rubik (and many others) don't actually have the 1/8 vulgar fractions and
 // foot-grave marker, so we use this one for now and see how we like it.
+// Geist Sans does not have a variable form
 Canvas.GlobalFonts.registerFromPath(
   path.join(
     import.meta.dirname,
@@ -50,7 +46,7 @@ Canvas.GlobalFonts.registerFromPath(
 Canvas.GlobalFonts.registerFromPath(
   path.join(
     import.meta.dirname,
-    '../../../node_modules/@fontsource/overpass/files/overpass-latin-700-normal.woff2'
+    '../../../node_modules/@fontsource-variable/overpass/files/overpass-latin-wght-normal.woff2'
   ),
   'Overpass'
 )
@@ -63,9 +59,9 @@ const IMAGE_NAMES_WIDTHS_PADDING = 65
 // copy paste values witout importing for now
 const BUILDING_SPACE = 360
 
-export async function makeStreetImage (
-  street: Street,
-  options: StreetImageOptions
+export async function makeStreetImage(
+  street: StreetAPIResponse,
+  options: StreetImageExportOptions
 ): Promise<Buffer> {
   // Easier to work in base width/height numbers first,
   // then multiply by scale _after_ all +/- calculations are done
@@ -140,6 +136,9 @@ export async function makeStreetImage (
       options.scale
     )
 
+    // Slices
+    drawSlices(ctx, street.data.street, groundLevel, offsetLeft, options.scale)
+
     // Labels
     if (options.labels) {
       drawLabelBackground(
@@ -189,11 +188,11 @@ export async function makeStreetImage (
   return await canvas.encode('png')
 }
 
-function calculateImageWidth (
-  street: Street,
+function calculateImageWidth(
+  street: StreetAPIResponse,
   // Don't need options, but this is keeping function signature the same
   // as `calculateImageHeight`
-  options: StreetImageOptions
+  _options: StreetImageExportOptions
 ): number {
   const streetData = street.data.street
   const streetWidth = TILE_SIZE * streetData.width // translate width to pixels
@@ -202,9 +201,9 @@ function calculateImageWidth (
   return baseWidth
 }
 
-function calculateImageHeight (
-  street: Street,
-  options: StreetImageOptions
+function calculateImageHeight(
+  street: StreetAPIResponse,
+  options: StreetImageExportOptions
 ): number {
   // const streetData = street.data.street
   const { streetName, labels } = options

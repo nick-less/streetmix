@@ -1,10 +1,10 @@
 import models from '../../db/models/index.js'
-import { ERRORS } from '../../lib/util.js'
-import logger from '../../lib/logger.js'
+import { asStreetJsonBasic, ERRORS } from '../../lib/util.js'
+import { logger } from '../../lib/logger.ts'
 
 const { User, Street } = models
 
-function handleErrors (error, res) {
+function handleErrors(error, res) {
   switch (error) {
     case ERRORS.USER_NOT_FOUND:
       res.status(404).json({ status: 404, msg: 'Creator not found.' })
@@ -26,7 +26,7 @@ function handleErrors (error, res) {
     case ERRORS.FORBIDDEN_REQUEST:
       res.status(403).json({
         status: 403,
-        msg: 'Signed-in user cannot delete this street.'
+        msg: 'Signed-in user cannot delete this street.',
       })
       break
     default:
@@ -36,7 +36,7 @@ function handleErrors (error, res) {
   }
 } // END function - handleErrors
 
-export async function get (req, res) {
+export async function get(req, res) {
   // Flag error if user ID is not provided
   if (!req.params.user_id) {
     res.status(400).json({ status: 400, msg: 'Please provide user ID.' })
@@ -48,7 +48,7 @@ export async function get (req, res) {
     try {
       streets = await Street.findAll({
         where: { creatorId: userId, status: 'ACTIVE' },
-        order: [['updatedAt', 'DESC']]
+        order: [['updatedAt', 'DESC']],
       })
     } catch (err) {
       logger.error(err)
@@ -62,12 +62,15 @@ export async function get (req, res) {
     return streets
   } // END function - handleFindUserstreets
 
-  const handleFindUserStreets = function (streets) {
-    const json = { streets }
+  const handleFindUserStreets = function (data) {
+    const json = {
+      // Remove properties that should not be sent to client
+      streets: data.map(asStreetJsonBasic),
+    }
     res.status(200).json(json).end()
   } // END function - handleFindUserStreets
 
-  function handleErrors (error) {
+  function handleErrors(error) {
     switch (error) {
       case ERRORS.USER_NOT_FOUND:
         res.status(404).json({ status: 404, msg: 'Creator not found.' })
@@ -89,7 +92,7 @@ export async function get (req, res) {
       case ERRORS.FORBIDDEN_REQUEST:
         res.status(403).json({
           status: 403,
-          msg: 'Signed-in user cannot delete this street.'
+          msg: 'Signed-in user cannot delete this street.',
         })
         return
       default:
@@ -119,7 +122,7 @@ export async function get (req, res) {
   }
 }
 
-export async function del (req, res) {
+export async function del(req, res) {
   // Flag error if user ID is not provided
   if (!req.params.user_id) {
     res.status(400).json({ status: 400, msg: 'Please provide user ID.' })
@@ -160,7 +163,7 @@ export async function del (req, res) {
     if (!requestUserIsAdmin) {
       res.status(401).json({
         status: 401,
-        msg: 'Unable to delete streets by another user.'
+        msg: 'Unable to delete streets by another user.',
       })
       return
     }
@@ -181,7 +184,7 @@ export async function del (req, res) {
     targetUser = requestUser
   }
 
-  const handleRemoveUserStreets = function (error, streets) {
+  const handleRemoveUserStreets = function (error, _streets) {
     if (error) {
       logger.error(error)
       handleErrors(ERRORS.CANNOT_UPDATE_STREET, res)

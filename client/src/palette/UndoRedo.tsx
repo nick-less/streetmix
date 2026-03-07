@@ -1,25 +1,24 @@
-import React from 'react'
 import { useIntl } from 'react-intl'
 
-import { useSelector, useDispatch } from '../store/hooks'
-import { handleUndo, handleRedo } from '../store/actions/history'
-import Button from '../ui/Button'
-import Icon from '../ui/Icon'
-import { Tooltip, TooltipGroup } from '../ui/Tooltip'
-import { isOwnedByCurrentUser } from '../streets/owner'
+import { useSelector, useDispatch } from '../store/hooks.js'
+import { handleUndo, handleRedo } from '../store/actions/history.js'
+import { Button } from '../ui/Button.js'
+import Icon from '../ui/Icon.js'
+import { Tooltip, TooltipGroup } from '../ui/Tooltip.js'
+import { isOwnedByCurrentUser } from '../streets/owner.js'
 
-function UndoRedo (): React.ReactElement {
+export function UndoRedo() {
   const undoPosition = useSelector((state) => state.history.position)
   const undoStack = useSelector((state) => state.history.stack)
   const dispatch = useDispatch()
   const intl = useIntl()
 
   // Don’t allow undo/redo unless you own the street
-  function isUndoAvailable (): boolean {
+  function isUndoAvailable(): boolean {
     return undoPosition > 0 && isOwnedByCurrentUser()
   }
 
-  function isRedoAvailable (): boolean {
+  function isRedoAvailable(): boolean {
     return (
       undoPosition >= 0 &&
       undoPosition < undoStack.length - 1 &&
@@ -27,30 +26,35 @@ function UndoRedo (): React.ReactElement {
     )
   }
 
+  const undoLabel = intl.formatMessage({
+    id: 'btn.undo',
+    defaultMessage: 'Undo',
+  })
+  const redoLabel = intl.formatMessage({
+    id: 'btn.redo',
+    defaultMessage: 'Redo',
+  })
+
   return (
     <TooltipGroup>
-      <Tooltip
-        label={intl.formatMessage({ id: 'btn.undo', defaultMessage: 'Undo' })}
-      >
+      <Tooltip label={undoLabel}>
         <Button
           onClick={() => {
             dispatch(handleUndo())
           }}
           disabled={!isUndoAvailable()}
-          data-testid="undo"
+          aria-label={undoLabel}
         >
           <Icon name="undo" />
         </Button>
       </Tooltip>
-      <Tooltip
-        label={intl.formatMessage({ id: 'btn.redo', defaultMessage: 'Redo' })}
-      >
+      <Tooltip label={redoLabel}>
         <Button
           onClick={() => {
             dispatch(handleRedo())
           }}
           disabled={!isRedoAvailable()}
-          data-testid="redo"
+          aria-label={redoLabel}
         >
           <Icon name="redo" />
         </Button>
@@ -58,5 +62,3 @@ function UndoRedo (): React.ReactElement {
     </TooltipGroup>
   )
 }
-
-export default UndoRedo

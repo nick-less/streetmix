@@ -1,0 +1,115 @@
+import { convertImperialMeasurementToMetric } from '~/src/util/width_units.js'
+import { SEA_LEVEL_RISE_FEET, SURGE_HEIGHT_FEET } from './constants.js'
+
+import type { FloodDirection, SliceItem } from '@streetmix/types'
+
+// Returns total sea level rise in metric values
+// Takes into account storm surge levels
+export function calculateSeaLevelRise(
+  seaLevelRise: number,
+  stormSurge: boolean
+) {
+  let heightFeet = 0
+
+  if (seaLevelRise in SEA_LEVEL_RISE_FEET) {
+    heightFeet +=
+      SEA_LEVEL_RISE_FEET[seaLevelRise as keyof typeof SEA_LEVEL_RISE_FEET]
+  }
+
+  if (stormSurge) {
+    heightFeet += SURGE_HEIGHT_FEET
+  }
+
+  const height = convertImperialMeasurementToMetric(heightFeet)
+
+  return height
+}
+
+export function checkSeaLevel(
+  slices: SliceItem[],
+  streetEl: HTMLDivElement | null,
+  canvasEl: HTMLElement | null,
+  seaLevelRise: number,
+  stormSurge: boolean,
+  floodDirection: FloodDirection
+): number | null {
+  const height = calculateSeaLevelRise(seaLevelRise, stormSurge)
+
+  if (streetEl === null || canvasEl === null) return null
+
+  let slicePosition
+
+  // Depending on whether the flood comes from the left or right, set up
+  // a compare loop that counts up or down
+  const fromLeft = floodDirection === 'left'
+  const start = fromLeft ? 0 : slices.length - 1
+  const end = fromLeft ? slices.length : -1
+  const step = fromLeft ? 1 : -1
+
+  for (let i = start; fromLeft ? i < end : i > end; i += step) {
+    const slice = slices[i]
+
+    let compareElevation: number
+
+    // Slices can block a flood based on its elevation.
+    // First, see if this slice is sloped.
+    // Compare the flood height with the slope value facing the flood direction
+    if (slice.slope.on) {
+      if (fromLeft) {
+        compareElevation = slice.slope.values[0] ?? slice.elevation
+      } else {
+        compareElevation = slice.slope.values[1] ?? slice.elevation
+      }
+    } else {
+      // If not sloped, we look at the slice's flat elevation.
+      compareElevation = slice.elevation
+    }
+
+    // Walls are a special case that is capable of blocking a flood (like a
+    // seawall, etc). So its compare elevation will be higher
+    // TODO: Don't hardcode these height numbers
+    if (slice.type === 'wall') {
+      if (slice.variant['wall-height'] === 'low') {
+        compareElevation += 1
+      } else {
+        // High wall variant
+        compareElevation += 2.15
+      }
+    }
+
+    // If this slice blocks a flood, record its position and exit loop
+    if (compareElevation >= height) {
+      slicePosition = i
+      break
+    }
+  }
+
+  // Bail if no slice meets or exceeds flood height.
+  if (typeof slicePosition !== 'number') {
+    return null
+  }
+
+  // Get the pixel position of the blocking element
+  const sliceEl = streetEl.querySelector<HTMLElement>(
+    `[data-slice-index="${slicePosition}"]`
+  )
+
+  if (fromLeft) {
+    const distance = Number(sliceEl?.dataset.sliceLeft)
+    return distance
+  } else {
+    // There are some extra steps for calculating the right-hand distance
+    // which is based on the width of the on-screen canvasEl element.
+    // The timing of when this function is called is important because
+    // putting it in the wrong place could cause the element to not be
+    // present, or not yet have an `offsetWidth` value. We can remove this
+    // by switching to calculating flood distance in real world values
+    // rather than on-screen pixel values.
+    const parentWidth = canvasEl.offsetWidth ?? 0
+    const offsetLeftPlusWidth =
+      Number(sliceEl?.dataset.sliceLeft) + (sliceEl?.offsetWidth ?? 0)
+
+    const distance = parentWidth - offsetLeftPlusWidth
+    return distance
+  }
+}

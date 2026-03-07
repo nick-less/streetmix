@@ -2,8 +2,8 @@ import React, { forwardRef } from 'react'
 import { useIntl } from 'react-intl'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 
-import AccessibleIcon from './AccessibleIcon'
-import Icon from './Icon'
+import AccessibleIcon from './AccessibleIcon.js'
+import Icon from './Icon.js'
 
 import type { PopoverContentProps } from '@radix-ui/react-popover'
 import './Popover.css'
@@ -16,7 +16,7 @@ interface PopoverProps {
 const PopoverContent = forwardRef(
   (
     { children, ...props }: PopoverContentProps,
-    ref: React.Ref<HTMLDivElement>
+    ref: React.ForwardedRef<HTMLDivElement>
   ) => (
     <PopoverPrimitive.Content {...props} ref={ref}>
       {children}
@@ -27,13 +27,13 @@ const PopoverContent = forwardRef(
 
 PopoverContent.displayName = 'PopoverContent'
 
-function Popover ({ label, children }: PopoverProps): React.ReactElement {
+export function Popover({ label, children }: PopoverProps) {
   const intl = useIntl()
   const a11yLabel =
     label ??
     intl.formatMessage({
       id: 'settings.info-tooltip',
-      defaultMessage: 'Description'
+      defaultMessage: 'Description',
     })
 
   return (
@@ -41,7 +41,7 @@ function Popover ({ label, children }: PopoverProps): React.ReactElement {
       <PopoverPrimitive.Trigger asChild>
         <button className="popover-trigger">
           <AccessibleIcon label={a11yLabel}>
-            <Icon name="info" />
+            <Icon name="info" size="18" />
           </AccessibleIcon>
         </button>
       </PopoverPrimitive.Trigger>
@@ -56,5 +56,3 @@ function Popover ({ label, children }: PopoverProps): React.ReactElement {
     </PopoverPrimitive.Root>
   )
 }
-
-export default Popover

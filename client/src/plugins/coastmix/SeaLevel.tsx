@@ -1,16 +1,14 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 
-import { useSelector } from '~/src/store/hooks'
-import { GROUND_BASELINE_HEIGHT, TILE_SIZE } from '~/src/segments/constants'
-import { convertImperialMeasurementToMetric } from '~/src/util/width_units'
-import {
-  SEA_LEVEL_YEAR_2030,
-  SEA_LEVEL_YEAR_2050,
-  SEA_LEVEL_YEAR_2070
-} from './constants'
+import { useSelector } from '~/src/store/hooks.js'
+import { GROUND_BASELINE_HEIGHT, TILE_SIZE } from '~/src/segments/constants.js'
+import { usePrevious } from '~/src/util/usePrevious.js'
+import { SEA_LEVEL_RISE_FEET } from './constants.js'
+import { calculateSeaLevelRise } from './sea_level.js'
 import './SeaLevel.css'
 
 interface SeaLevelProps {
+  boundaryWidth: number
   scrollPos: number
 }
 
@@ -19,60 +17,85 @@ interface SeaLevelProps {
 const HALF_OF_WAVE_HEIGHT = 8 / 2
 const WAVE_OPACITY = 0.4
 
-// This was originally specc'd at 2 feet (but it was a rough guess anyway)
-// Currently at 1.25 to account for visual effect (scaleY) of waves.
-const SURGE_HEIGHT_FEET = 1.25
+export function SeaLevel({ boundaryWidth, scrollPos }: SeaLevelProps) {
+  const street = useSelector((state) => state.street)
+  const { seaLevelRise, stormSurge, floodDirection, floodDistance } =
+    useSelector((state) => state.coastmix)
 
-// Estimates for City of Boston
-const SEA_LEVEL_RISE_FEET = {
-  [SEA_LEVEL_YEAR_2030]: 1.5,
-  [SEA_LEVEL_YEAR_2050]: 2.5,
-  [SEA_LEVEL_YEAR_2070]: 4.5
-}
+  // When switching streets, don't transition sea level height
+  const prevStreetId = usePrevious(street.id)
+  const animationOff = prevStreetId !== street.id
 
-export function SeaLevel (props: SeaLevelProps): React.ReactElement {
-  const { scrollPos } = props
-  const { seaLevelRise, stormSurge } = useSelector((state) => state.coastmix)
-
+  // Baseline height
   let height =
     GROUND_BASELINE_HEIGHT - HALF_OF_WAVE_HEIGHT * (stormSurge ? 2 : 1)
-  let opacity = 0
-  if (seaLevelRise in SEA_LEVEL_RISE_FEET) {
-    height +=
-      convertImperialMeasurementToMetric(SEA_LEVEL_RISE_FEET[seaLevelRise]) *
-      TILE_SIZE
-    opacity = WAVE_OPACITY
+
+  // Calculate how much sea level rises
+  const rise = calculateSeaLevelRise(seaLevelRise, stormSurge)
+
+  // Total height added together
+  height += rise * TILE_SIZE
+
+  // Show visually when sea level rises
+  const opacity = seaLevelRise in SEA_LEVEL_RISE_FEET ? WAVE_OPACITY : 0
+
+  // Default style -- floods full width of section
+  const styles: React.CSSProperties = {
+    height: `${height}px`,
+    opacity,
+    left: `-${boundaryWidth}px`,
+    right: `-${boundaryWidth}px`,
   }
 
-  // Verify this math with the waves and stuff
-  const surge = stormSurge
-    ? convertImperialMeasurementToMetric(SURGE_HEIGHT_FEET) * TILE_SIZE
-    : 0
-  const styles = {
-    height: `${height + surge}px`,
-    opacity
+  if (animationOff) {
+    styles.transition = 'none'
+  }
+
+  // Affect the rain canvas when storm surging
+  // TODO: don't do DOM manip
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>('.rain-canvas')
+    if (!el) return
+    if (stormSurge) {
+      el.style.top = `-${height - 45}px`
+    } else {
+      el.style.top = 'auto'
+    }
+  }, [stormSurge, height])
+
+  // If flood direction comes from the left
+  if (floodDirection === 'left' && floodDistance !== null) {
+    styles.width = `${boundaryWidth + floodDistance}px`
+    styles.right = 'auto'
+  }
+  if (floodDirection === 'right' && floodDistance !== null) {
+    styles.left = 'auto'
+    styles.width = `${boundaryWidth + floodDistance}px`
   }
 
   const classNames = ['sea-level-waves']
-  if (surge) {
+  if (stormSurge) {
     classNames.push('sea-level-surge')
+  }
+  if (animationOff) {
+    classNames.push('sea-level-animation-off')
   }
 
   return (
     <div className="sea-level-rise" style={styles}>
-      <div
-        className={classNames.join(' ')}
-        style={getWavePosition(scrollPos)}
-      />
+      <div className={classNames.join(' ')}>
+        <div style={getWavePosition(scrollPos)} />
+      </div>
     </div>
   )
 }
 
-function getWavePosition (scrollPos: number): React.CSSProperties {
+// Wave position for parallax scrolling
+function getWavePosition(scrollPos: number): React.CSSProperties {
   const speed = 0.5
   const pos = scrollPos * speed
 
   return {
-    backgroundPosition: `-${pos}px 0`
+    backgroundPosition: `-${pos}px 0`,
   }
 }

@@ -1,6 +1,5 @@
 import { initSystemCapabilities } from '../preinit/system_capabilities'
 import { initCoil } from '../integrations/coil'
-import { segmentsChanged } from '../segments/view'
 import { initLocale } from '../locales/locale'
 import { setLastStreet, setIgnoreStreetChanges } from '../streets/data_model'
 import { initStreetNameChangeListener } from '../streets/name'
@@ -15,6 +14,7 @@ import { updateSettingsFromCountryCode } from '../users/localization'
 import { initSettingsStoreObserver } from '../users/settings'
 import store, { observeStore } from '../store'
 import { openGallery } from '../store/actions/gallery'
+import { segmentsChanged } from '../store/actions/street'
 import { everythingLoaded } from '../store/slices/app'
 import { detectGeolocation } from '../store/slices/user'
 import { showDialog } from '../store/slices/dialogs'
@@ -28,17 +28,17 @@ import { loadImages } from './load_resources'
 
 let serverContacted
 
-export function setServerContacted (value) {
+export function setServerContacted(value) {
   serverContacted = value
 }
 
-function preInit () {
+function preInit() {
   initSystemCapabilities()
   setIgnoreStreetChanges(true)
 
   let language = window.navigator.userLanguage || window.navigator.language
   if (language) {
-    language = language.substr(0, 2).toUpperCase()
+    language = language.substring(0, 2).toUpperCase()
     updateSettingsFromCountryCode(language)
   }
 
@@ -50,7 +50,7 @@ function preInit () {
   observeStoreToUpdateBodyClasses()
 }
 
-export async function initialize () {
+export async function initialize() {
   preInit()
 
   window.dispatchEvent(new window.CustomEvent('stmx:init'))
@@ -71,8 +71,8 @@ export async function initialize () {
   // This dispatch returns a Promise. We await it so we can update
   // settings when it's retrieved. TODO: handle this in Redux
   const geo = await store.dispatch(detectGeolocation())
-  if (geo?.payload?.country_code) {
-    updateSettingsFromCountryCode(geo.payload.country_code)
+  if (geo?.payload?.countryCode) {
+    updateSettingsFromCountryCode(geo.payload.countryCode)
   }
 
   // Parallel tasks
@@ -89,7 +89,7 @@ export async function initialize () {
   checkIfEverythingIsLoaded()
 }
 
-export function checkIfEverythingIsLoaded () {
+export function checkIfEverythingIsLoaded() {
   if (store.getState().errors.abortEverything) {
     return
   }
@@ -99,12 +99,12 @@ export function checkIfEverythingIsLoaded () {
   }
 }
 
-function onEverythingLoaded () {
+function onEverythingLoaded() {
   if (getMode() === MODES.NEW_STREET_COPY_LAST) {
     fetchLastStreet()
   }
 
-  segmentsChanged()
+  store.dispatch(segmentsChanged())
 
   setIgnoreStreetChanges(false)
   setLastStreet()
@@ -127,13 +127,13 @@ function onEverythingLoaded () {
     store.dispatch(
       openGallery({
         userId: store.getState().gallery.userId,
-        instant: true
+        instant: true,
       })
     )
   } else if (mode === MODES.GLOBAL_GALLERY) {
     store.dispatch(
       openGallery({
-        instant: true
+        instant: true,
       })
     )
   }
@@ -150,7 +150,7 @@ function onEverythingLoaded () {
     const LSKEY_WELCOME_DISMISSED = 'settings-welcome-dismissed'
     const LSKEY_WHATSNEW_LAST_TIMESTAMP = 'whatsnew-last-timestamp'
 
-    const whatsNewTimestamp = 1537222458620 // Hard-coded value
+    const whatsNewTimestamp = 1768411201398 // Hard-coded value
 
     const state = store.getState()
     const whatsNewFlag = state.flags.ALWAYS_DISPLAY_WHATS_NEW.value
@@ -191,7 +191,7 @@ function onEverythingLoaded () {
   }
 }
 
-function showConsoleMessage () {
+function showConsoleMessage() {
   console.log(
     `%c
   ____  _    %cWelcome to%c   _             _      _
@@ -217,12 +217,11 @@ function showConsoleMessage () {
  * Toggle features based on system state. (This allows toggling to debug things,
  * which will allow us to remove the debug URL parameters as a future TODO)
  */
-function observeStoreToUpdateBodyClasses () {
+function observeStoreToUpdateBodyClasses() {
   const select = (state) => ({ system: state.system, app: state.app })
   const onChange = (state) => {
     document.body.classList.toggle('windows', state.system.windows)
     document.body.classList.toggle('safari', state.system.safari)
-    document.body.classList.toggle('phone', state.system.phone)
     document.body.classList.toggle('read-only', state.app.readOnly)
   }
 

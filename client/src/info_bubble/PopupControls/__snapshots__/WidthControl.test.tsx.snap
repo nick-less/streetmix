@@ -3,20 +3,27 @@
 exports[`WidthControl > renders 1`] = `
 <DocumentFragment>
   <div
-    class="non-variant"
+    class="popup-control-row"
   >
+    <span
+      class="popup-control-icon"
+    >
+      <svg
+        data-icon="slice-width"
+        size="30"
+        stroke="1.5"
+      />
+    </span>
     <div
       class="up-down-input"
     >
       <button
         class="btn up-down-input-decrement"
         data-testid="down"
-        tabindex="-1"
         type="button"
       >
         <svg
           data-icon="minus"
-          data-icon-source="test"
         />
       </button>
       <input
@@ -28,12 +35,10 @@ exports[`WidthControl > renders 1`] = `
       <button
         class="btn up-down-input-increment"
         data-testid="up"
-        tabindex="-1"
         type="button"
       >
         <svg
           data-icon="plus"
-          data-icon-source="test"
         />
       </button>
     </div>

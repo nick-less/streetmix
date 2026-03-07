@@ -1,18 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { getSegmentInfo, getSegmentVariantInfo } from '@streetmix/parts'
 
 import { getElevationValue } from '~/src/segments/elevation'
 import { getVariantString } from '~/src/segments/variant_utils'
 import { DEFAULT_SKYBOX } from '~/src/sky/constants'
 import { MAX_BUILDING_HEIGHT } from '~/src/segments/constants'
-import { getSegmentInfo, getSegmentVariantInfo } from '~/src/segments/info'
 import { SETTINGS_UNITS_METRIC } from '~/src/users/constants'
 
-import type { BoundaryPosition, Segment, StreetState } from '@streetmix/types'
+import type {
+  BoundaryPosition,
+  Segment,
+  StreetState,
+  WeatherEffect,
+} from '@streetmix/types'
 import type { PayloadAction } from '@reduxjs/toolkit'
 
 const initialState: StreetState = {
   id: '',
   namespacedId: 0,
+  originalStreetId: null,
   schemaVersion: 0,
   units: SETTINGS_UNITS_METRIC,
   width: 0,
@@ -23,16 +29,17 @@ const initialState: StreetState = {
       id: '',
       variant: '',
       floors: 0,
-      elevation: 0
+      elevation: 0,
     },
     right: {
       id: '',
       variant: '',
       floors: 0,
-      elevation: 0
-    }
+      elevation: 0,
+    },
   },
   skybox: DEFAULT_SKYBOX,
+  weather: null,
   location: null,
   showAnalytics: false,
   occupiedWidth: 0,
@@ -40,7 +47,7 @@ const initialState: StreetState = {
   creatorId: null,
   userUpdated: false,
   editCount: 0,
-  immediateRemoval: true
+  immediateRemoval: true,
 }
 
 const streetSlice = createSlice({
@@ -51,31 +58,31 @@ const streetSlice = createSlice({
     // This completely replaces arbitrary street data. The other actions below
     // are much more surgical and should be used instead of this one for small
     // updates. Use this one if you need to batch multiple actions into one.
-    updateStreetData (state, action: PayloadAction<StreetState>) {
+    updateStreetData(state, action: PayloadAction<Partial<StreetState>>) {
       return {
         ...state,
         ...action.payload,
-        immediateRemoval: true
+        immediateRemoval: true,
       }
     },
 
     addSegment: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ index: number; segment: Segment }>
       ) {
         const { index, segment } = action.payload
         state.segments.splice(index, 0, segment)
       },
-      prepare (index: number, segment: Segment) {
+      prepare(index: number, segment: Segment) {
         return {
-          payload: { index, segment }
+          payload: { index, segment },
         }
-      }
+      },
     },
 
     removeSegment: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ index: number; immediate: boolean }>
       ) {
@@ -83,40 +90,53 @@ const streetSlice = createSlice({
         state.segments.splice(index, 1)
         state.immediateRemoval = immediate
       },
-      prepare (index: number, immediate = true) {
+      prepare(index: number, immediate = true) {
         return {
-          payload: { index, immediate }
+          payload: { index, immediate },
         }
-      }
+      },
     },
 
     moveSegment: {
-      reducer (
+      reducer(
         state,
-        action: PayloadAction<{ fromIndex: number; toIndex: number }>
+        action: PayloadAction<{
+          fromIndex: number
+          toIndex: number
+          update: Partial<Segment>
+        }>
       ) {
-        const { fromIndex, toIndex } = action.payload
-        const segment = state.segments[fromIndex]
+        const { fromIndex, toIndex, update } = action.payload
+        // `update` is an optional partial SliceItem / Segment object
+        // so while moving, we can apply any changes to the slice
+        const segment = {
+          ...state.segments[fromIndex],
+          ...update,
+        }
         state.segments.splice(fromIndex, 1)
         state.segments.splice(toIndex, 0, segment)
       },
-      prepare (fromIndex: number, toIndex: number) {
+      prepare(
+        fromIndex: number,
+        toIndex: number,
+        update: Partial<Segment> = {}
+      ) {
         return {
-          payload: { fromIndex, toIndex }
+          payload: { fromIndex, toIndex, update },
         }
-      }
+      },
     },
 
-    updateShowAnalytics (state, action) {
+    updateShowAnalytics(state, action) {
       state.showAnalytics = action.payload
     },
 
-    updateCapacitySource (state, action) {
+    updateCapacitySource(state, action) {
       state.capacitySource = action.payload
     },
 
     updateSegments: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{
           segments: Segment[]
@@ -130,36 +150,36 @@ const streetSlice = createSlice({
         state.occupiedWidth = occupiedWidth
         state.remainingWidth = remainingWidth
       },
-      prepare (
+      prepare(
         segments: Segment[],
         occupiedWidth: number,
         remainingWidth: number
       ) {
         return {
-          payload: { segments, occupiedWidth, remainingWidth }
+          payload: { segments, occupiedWidth, remainingWidth },
         }
-      }
+      },
     },
 
-    clearSegments (state) {
+    clearSegments(state) {
       state.segments = []
       state.immediateRemoval = true
     },
 
     changeSegmentWidth: {
-      reducer (state, action: PayloadAction<{ index: number; width: number }>) {
+      reducer(state, action: PayloadAction<{ index: number; width: number }>) {
         const { index, width } = action.payload
         state.segments[index].width = width
       },
-      prepare (index: number, width: number) {
+      prepare(index: number, width: number) {
         return {
-          payload: { index, width }
+          payload: { index, width },
         }
-      }
+      },
     },
 
     changeSegmentVariant: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ index: number; set: string; selection: string }>
       ) {
@@ -182,43 +202,60 @@ const streetSlice = createSlice({
         // elevation from the new variant information. Sometimes a
         // variant has different elevations, see "divider" type for example
         // NOTE: skip this if `enableElevation` is on
-        // TODO: also skip this if segment elevation has been manually set
+        // also skip this if segment elevation has been manually set
         const segmentInfo = getSegmentInfo(segment.type)
         const variantInfo = getSegmentVariantInfo(
           segment.type,
           segment.variantString
         )
-        if (segmentInfo.enableElevation !== true) {
+        if (
+          segmentInfo.enableElevation !== true &&
+          segment.elevationChanged !== true
+        ) {
           segment.elevation = getElevationValue(
             variantInfo.elevation,
             state.units
           )
         }
       },
-      prepare (index: number, set: string, selection: string) {
+      prepare(index: number, set: string, selection: string) {
         return {
-          payload: { index, set, selection }
+          payload: { index, set, selection },
         }
-      }
+      },
+    },
+
+    toggleSliceSlope: {
+      reducer(state, action: PayloadAction<{ index: number; value: boolean }>) {
+        const { index, value } = action.payload
+        const slice = state.segments[index]
+
+        slice.slope.on = value
+      },
+      prepare(index: number, value: boolean) {
+        return {
+          payload: { index, value },
+        }
+      },
     },
 
     changeSegmentProperties: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ index: number; properties: Partial<Segment> }>
       ) {
         const { index, properties } = action.payload
         Object.assign(state.segments[index], properties)
       },
-      prepare (index: number, properties: Partial<Segment>) {
+      prepare(index: number, properties: Partial<Segment>) {
         return {
-          payload: { index, properties }
+          payload: { index, properties },
         }
-      }
+      },
     },
 
     saveStreetName: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{
           streetName: string | null
@@ -233,33 +270,37 @@ const streetSlice = createSlice({
             // TODO: Consider whether to limit street name length here
             state.name = streetName.trim()
 
+            if (userUpdated) {
+              state.userUpdated = true
+            }
+
             // If a streetname is an empty string, unset it
+            // Also reset userUpdated state
             if (streetName === '') {
               state.name = null
+              state.userUpdated = false
             }
           } else {
             // If a streetname is null, unset it
+            // Also reset userUpdated state
             state.name = null
+            state.userUpdated = false
           }
         }
-
-        if (userUpdated) {
-          state.userUpdated = true
+      },
+      prepare(streetName: string | null, userUpdated: boolean) {
+        return {
+          payload: { streetName, userUpdated },
         }
       },
-      prepare (streetName: string | null, userUpdated: boolean) {
-        return {
-          payload: { streetName, userUpdated }
-        }
-      }
     },
 
-    saveCreatorId (state, action) {
+    saveCreatorId(state, action) {
       state.creatorId = action.payload
     },
 
     saveStreetId: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ id: string | null; namespacedId: number }>
       ) {
@@ -272,14 +313,14 @@ const streetSlice = createSlice({
 
         state.namespacedId = namespacedId
       },
-      prepare (id: string | null, namespacedId: number) {
+      prepare(id: string | null, namespacedId: number) {
         return {
-          payload: { id, namespacedId }
+          payload: { id, namespacedId },
         }
-      }
+      },
     },
 
-    updateStreetIdMetadata (state, action) {
+    updateStreetIdMetadata(state, action) {
       const { creatorId, id, namespacedId } = action.payload
       state.creatorId = creatorId
       state.id = id
@@ -287,36 +328,36 @@ const streetSlice = createSlice({
     },
 
     // TODO: validate time (payload) is a string matching ISO string format
-    setUpdateTime (state, action) {
+    setUpdateTime(state, action) {
       state.updatedAt = action.payload
       state.clientUpdatedAt = action.payload
     },
 
-    saveOriginalStreetId (state, action) {
+    saveOriginalStreetId(state, action) {
       state.originalStreetId = action.payload
     },
 
-    updateEditCount (state, action) {
+    updateEditCount(state, action) {
       state.editCount = action.payload
     },
 
-    setUnits (state, action) {
+    setUnits(state, action) {
       state.units = action.payload
     },
 
-    updateStreetWidth (state, action) {
+    updateStreetWidth(state, action) {
       state.width = action.payload
     },
 
-    updateSchemaVersion (state, action) {
+    updateSchemaVersion(state, action) {
       state.schemaVersion = action.payload
     },
 
-    addLocation (state, action) {
+    addLocation(state, action) {
       state.location = action.payload
     },
 
-    clearLocation (state, action) {
+    clearLocation(state) {
       state.location = null
 
       // If the street name was added as a result of geotagging, but not
@@ -328,7 +369,7 @@ const streetSlice = createSlice({
     },
 
     setBoundaryElevation: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ position: BoundaryPosition; value: number }>
       ) {
@@ -346,15 +387,15 @@ const streetSlice = createSlice({
             break
         }
       },
-      prepare (position: BoundaryPosition, value: number) {
+      prepare(position: BoundaryPosition, value: number) {
         return {
-          payload: { position, value }
+          payload: { position, value },
         }
-      }
+      },
     },
 
     // TODO: Buildings could be a child slice?
-    addBuildingFloor (state, action: PayloadAction<BoundaryPosition>) {
+    addBuildingFloor(state, action: PayloadAction<BoundaryPosition>) {
       const position = action.payload
 
       switch (position) {
@@ -373,7 +414,7 @@ const streetSlice = createSlice({
       }
     },
 
-    removeBuildingFloor (state, action: PayloadAction<BoundaryPosition>) {
+    removeBuildingFloor(state, action: PayloadAction<BoundaryPosition>) {
       const position = action.payload
 
       switch (position) {
@@ -393,7 +434,7 @@ const streetSlice = createSlice({
     },
 
     setBuildingFloorValue: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ position: BoundaryPosition; value: string }>
       ) {
@@ -417,15 +458,15 @@ const streetSlice = createSlice({
             break
         }
       },
-      prepare (position: BoundaryPosition, value: string) {
+      prepare(position: BoundaryPosition, value: string) {
         return {
-          payload: { position, value }
+          payload: { position, value },
         }
-      }
+      },
     },
 
     setBuildingVariant: {
-      reducer (
+      reducer(
         state,
         action: PayloadAction<{ position: BoundaryPosition; variant: string }>
       ) {
@@ -442,17 +483,21 @@ const streetSlice = createSlice({
             break
         }
       },
-      prepare (position: BoundaryPosition, variant: string) {
+      prepare(position: BoundaryPosition, variant: string) {
         return {
-          payload: { position, variant }
+          payload: { position, variant },
         }
-      }
+      },
     },
 
-    setSkybox (state, action) {
+    setSkybox(state, action) {
       state.skybox = action.payload
-    }
-  }
+    },
+
+    setWeather(state, action: PayloadAction<WeatherEffect | null>) {
+      state.weather = action.payload
+    },
+  },
 })
 
 export const {
@@ -466,6 +511,7 @@ export const {
   clearSegments,
   changeSegmentWidth,
   changeSegmentVariant,
+  toggleSliceSlope,
   changeSegmentProperties,
   saveStreetName,
   saveCreatorId,
@@ -484,7 +530,8 @@ export const {
   removeBuildingFloor,
   setBuildingFloorValue,
   setBuildingVariant,
-  setSkybox
+  setSkybox,
+  setWeather,
 } = streetSlice.actions
 
 export default streetSlice.reducer

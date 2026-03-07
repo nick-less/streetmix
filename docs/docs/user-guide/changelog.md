@@ -5,20 +5,81 @@ sidebar_position: 5
 
 # What's new in Streetmix?
 
-<!--  NOT RELEASED YET.
-## June 20, 2025
-
-### ✨ New features
-
-- Elevation controls
-- Add tooltips to variants panel
-- UI precision for metric slices returns to 0.1m. For more granular resolution of 0.05m, hold 'shift' when adjusting the width. This should be more obvious in the UI tooltip.
+## Unreleased
 
 ### 🐛 Bug fixes
 
-- Fix visual artifacts for the variants panel in right-to-left language modes.
-- Clearing a slice's custom label will now reset it to its original default label.
--->
+- Fixed a bug where unsetting a street name would not be saved to the server.
+
+## February 13, 2026
+
+### 🐛 Bug fixes
+
+- Fixed a bug that could cause popup contents to suddenly shift their position on taller screens, which can result in, for example, the "Remove" button being something you unintentionally clicked on when you meant to click on the "Increase width" button.
+
+## January 31, 2026
+
+### 🐛 Bug fixes
+
+- Fixed a bug (a big one!) that would cause the popups over section slices to aggressively switch to adjacent slices during mouse movement, particularly when interacting with very narrow slices, when you were just trying to reach interactive content inside the popup.
+
+## January 14, 2026
+
+### 🎮 UI improvements
+
+- There is now an icon and tooltip for element width and building height controls.
+- Additional tweaks and fixes to improve UI cohesion.
+
+### 🐛 Bug fixes
+
+- Fixed "grab" cursor incorrectly appearing over non-draggable areas.
+- Fixed a bug that could cause new streets to temporarily be assigned to a creator with an incorrect value.
+
+## January 2, 2026
+
+🎉 **Happy new year!** Just a handful of improvements to ring in the start of 2026.
+
+### 🎮 UI improvements
+
+- Tweaks to UI icons.
+- Street scroll buttons have clearer interaction visuals.
+
+### 🐛 Bug fixes
+
+- Fixed a bug which can cause street scroll buttons to not be interactive.
+
+## December 20, 2025
+
+Happy holidays! As 2025 draws to a close, we're finally publishing a new release in order to collect data on how well some big internal changes will work for our users. There have been a lot of under-the-hood work for many months and it's not ready to be revealed just yet, but all I can say is that you can look forward to some _elevated_ experiences in 2026. Perhaps I should take it easy on the puns, let it become a slippery _slope_? Anyway, no _coast_-ing for Team Streetmix!
+
+Meanwhile, here are the notable user-facing changes!
+
+### ✨ New features
+
+**New starting templates for streets!** For a long time, we only had one default starting street configuration that showed off a variety of Streetmix features in a nicely designed street. But in reality, streets come in many shapes, sizes, and qualities... so our first new template is the much more common [stroad](https://www.strongtowns.org/journal/2018-3-1-whats-a-stroad-and-why-does-it-matter)! (ugh.)
+
+![New "stroad template"](/img/changelog/stroad.png)
+
+You can find that under the "New street" menu. There will be more to come! Templates is in beta testing now for signed-in users, and if you have feedback or ideas on what new templates should be added, please let us know in [Discord](https://strt.mx/discord).
+
+### 🎮 UI improvements
+
+- Added tooltips to variant selection popup and width input.
+- UI precision for street elements in metric units returns to 0.1m. For more granular resolution of 0.05m, hold the `Shift` key when adjusting the width. This behavior was previously not well explained, but is now expressed in the UI tooltip.
+- If a street has not been previously geolocated, the map view will now center on the user's current position, if allowed on the user's device.
+- Additional miscellaneous tweaks to improve map view behavior.
+- Descriptions for street elements (e.g. "learn more about bike lanes") now open in standalone popups.
+- Drag handles for street element width have a clearer hover state.
+- Small visual tweaks to boundary illustrations (buildings, etc.)
+- Updates to Czech and Finnish translations.
+
+### 🐛 Bug fixes
+
+- Fixed various bugs related to dragging and dropping street elements, including a big one where it was not possible to drop something on the left-most position on the street. While many issues have been ironed out, there are unpredictable edge cases where a drag-drop interaction may fail or crash Streetmix entirely. If this occurs for you, please [open an issue](https://github.com/streetmix/streetmix/issues/).
+- Fixed visual artifacts in the variant selection popup when in right-to-left language modes.
+- Fixed a bug where clearing a street element's custom label did not reset it to its original default label.
+- Fixed a bug where, after clearing a user-provided street name, updating its geolocation will not automatically attach a new street name from the updated location.
+- Fixed various precision-related issues resulting from converting small numbers to or from metric and US customary units.
 
 ## May 21, 2025
 

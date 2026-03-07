@@ -28,7 +28,7 @@
     },
     "share": {
       "sign-in-twitter-link": "Sign in",
-      "sign-in-link": "{signInLink} for nicer links to your streets and your personal street gallery",
+      "sign-in-link": "{signInLink} for nicer links to your streets and your personal street gallery.",
       "link": "Copy and paste this link to share:",
       "copy-to-clipboard": "Copy to clipboard",
       "twitter": "Share using Twitter",
@@ -71,7 +71,8 @@
       "default": "New example street",
       "empty": "New empty street",
       "copy": "Make a copy",
-      "template": "New from template…"
+      "template": "New from template…",
+      "sign-in-link": "{signInLink} for access to templates."
     }
   },
   "settings": {
@@ -131,8 +132,7 @@
       "sign-in": "Sign in again",
       "reload": "Reload the page",
       "return": "Return to Streetmix",
-      "try-again": "Try again",
-      "view-example": "View an example street"
+      "try-again": "Try again"
     },
     "page-not-found-title": "Page not found.",
     "page-not-found-description": "Oh, boy. There is no page with this address!",
@@ -161,8 +161,6 @@
     "unsupported-browser-description": "Sorry about that. You might want to try <chrome_link>Chrome</chrome_link>, <firefox_link>Firefox</firefox_link>, <edge_link>Microsoft Edge</edge_link>, or Safari.",
     "unsupported-browser-internet-explorer": "Are you on Internet Explorer? <a>Find out more.</a>",
     "unsupported-browser-contact-us": "If you think your browser should be supported, please <a>contact us</a>.",
-    "cannot-create-new-street-on-phone-title": "Streetmix works on tablets and desktops only.",
-    "cannot-create-new-street-on-phone-description": "If you follow another link to a specific street, you can view it on your phone – but you cannot yet create new streets.",
     "generic-error-title": "Something went wrong.",
     "generic-error-description": "We’re sorry – something went wrong.",
     "error-code": "(Error {code}.)",
@@ -256,7 +254,8 @@
       "error-too-large": "This image is too big and we were not able to create it. Please try a smaller custom size.",
       "preview-image-alt": "Preview",
       "print-size": "Print size",
-      "digital-size": "Digital size"
+      "digital-size": "Digital size",
+      "weather-not-exported": "Weather effects will not be exported."
     },
     "geotag": {
       "search": "Search for a location",
@@ -393,6 +392,7 @@
     "rename": "Click to rename"
   },
   "building": {
+    "label": "Building height",
     "floors-count": "{count, plural, one {# floor} other {# floors}}"
   },
   "segments": {
@@ -415,8 +415,13 @@
       "max": "Max"
     },
     "controls": {
+      "width": "Width",
       "elevation": "Elevation",
-      "slope": "Slope"
+      "slope": {
+        "label": "Slope",
+        "switch-tooltip": "Toggle slope",
+        "disabled-tooltip": "This element cannot be sloped."
+      }
     }
   },
   "section": {

@@ -1,63 +1,57 @@
-import React from 'react'
 import { FormattedMessage } from 'react-intl'
 
-import { useSelector } from '~/src/store/hooks'
-import { useGetUserQuery } from '~/src/store/services/api'
-import Button from '~/src/ui/Button'
-import StreetName from '~/src/streets/StreetName'
-import Avatar from '~/src/users/Avatar'
-import { goNewStreet } from '../routing'
-import { setIsReturningUserInLocalStorage } from './WelcomePanel'
+import { useSelector } from '~/src/store/hooks.js'
+import { useGetUserQuery } from '~/src/store/services/api.js'
+import { Button } from '~/src/ui/Button.js'
+import StreetName from '~/src/streets/StreetName.js'
+import { Avatar } from '~/src/users/Avatar.js'
+import { goNewStreet } from '../routing.js'
+import { setIsReturningUser } from './localstorage.js'
 
-function FirstTimeExistingStreet (): React.ReactElement {
+export function FirstTimeExistingStreet() {
   const street = useSelector((state) => state.street)
   const { data: creatorProfile } = useGetUserQuery(street.creatorId)
 
-  function handleGoNewStreet (): void {
-    setIsReturningUserInLocalStorage()
+  function handleGoNewStreet(): void {
+    setIsReturningUser()
     goNewStreet(true)
   }
 
   return (
-    <div className="welcome-panel-content first-time-existing-street">
+    <div className="welcome-panel-content">
       <h1>
         <FormattedMessage
           id="dialogs.welcome.heading"
           defaultMessage="Welcome to Streetmix."
         />
       </h1>
-      {/* Enclose child elements in a paragraph-like <div> to get around
-          React's warning that <div> elements from StreetName and
-          Avatar components cannot exist inside a <p> */}
-      <div className="paragraph">
+      <p>
         {/* Display street creator if creatorId is available. */}
-        {typeof street.creatorId === 'string'
-          ? (
-            <FormattedMessage
-              id="dialogs.welcome.existing.intro"
-              defaultMessage="This is {streetName} made by {creator}."
-              values={{
-                streetName: <StreetName name={street.name} />,
-                creator: (
-                  <>
-                    <Avatar userId={street.creatorId} />{' '}
-                    {creatorProfile?.displayName ?? street.creatorId}
-                  </>
-                )
-              }}
-            />
-            )
-          : (
-            <FormattedMessage
-              id="dialogs.welcome.existing.intro-without-creator"
-              defaultMessage="This is {streetName}."
-              values={{
-                streetName: <StreetName name={street.name} />
-              }}
-            />
-            )}
-      </div>
-      <p className="important">
+        {typeof street.creatorId === 'string' ? (
+          <FormattedMessage
+            id="dialogs.welcome.existing.intro"
+            defaultMessage="This is {streetName} made by {creator}."
+            values={{
+              streetName: <StreetName name={street.name} />,
+              creator: (
+                <>
+                  <Avatar userId={street.creatorId} />{' '}
+                  {creatorProfile?.displayName ?? street.creatorId}
+                </>
+              ),
+            }}
+          />
+        ) : (
+          <FormattedMessage
+            id="dialogs.welcome.existing.intro-without-creator"
+            defaultMessage="This is {streetName}."
+            values={{
+              streetName: <StreetName name={street.name} />,
+            }}
+          />
+        )}
+      </p>
+      <p>
         <FormattedMessage
           id="dialogs.welcome.existing.instruct"
           defaultMessage="Remix it by moving some segments around, or {startYourOwnStreet}."
@@ -69,12 +63,10 @@ function FirstTimeExistingStreet (): React.ReactElement {
                   defaultMessage="Start your own street"
                 />
               </Button>
-            )
+            ),
           }}
         />
       </p>
     </div>
   )
 }
-
-export default FirstTimeExistingStreet

@@ -1,5 +1,7 @@
-import React, { memo } from 'react'
-import { prettifyWidth } from '../util/width_units'
+import { memo } from 'react'
+
+import { prettifyWidth } from '../util/width_units.js'
+
 import type { UnitsSetting } from '@streetmix/types'
 
 interface MeasurementTextProps {
@@ -8,7 +10,7 @@ interface MeasurementTextProps {
   locale: string
 }
 
-function MeasurementText (props: MeasurementTextProps): React.ReactElement {
+function MeasurementText(props: MeasurementTextProps) {
   const { value, units, locale } = props
 
   return <span>{prettifyWidth(value, units, locale)}</span>

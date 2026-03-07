@@ -1,42 +1,50 @@
-import { getVariantInfo } from '../segments/variant_utils'
-import { segmentsChanged } from '../segments/view'
-import {
-  setUpdateTime,
-  saveCreatorId,
-  updateEditCount
-} from '../store/slices/street'
+import { getVariantInfo } from '../segments/variant_utils.js'
+import { segmentsChanged } from '../segments/view.js'
 import store from '../store'
-import { createNewUndoIfNecessary, unifyUndoStack } from './undo_stack'
-import { updateLastStreetInfo, scheduleSavingStreetToServer } from './xhr'
-import type { StreetState, StreetJson } from '@streetmix/types'
+import {
+  saveCreatorId,
+  setUpdateTime,
+  updateEditCount,
+} from '../store/slices/street.js'
+import { createNewUndoIfNecessary, unifyUndoStack } from './undo_stack.js'
+import { scheduleSavingStreetToServer, updateLastStreetInfo } from './xhr.js'
 
-let _lastStreet: StreetJson
+import type {
+  SliceItemForServerTransmission,
+  StreetState,
+} from '@streetmix/types'
 
-export function setLastStreet (): void {
+let _lastStreet: Partial<StreetState>
+
+export function setLastStreet() {
   _lastStreet = trimStreetData(store.getState().street)
 }
 
 // Do some work to update segment data, although they're not technically
 // part of the schema (yet?) -- carried over after moving bulk of
 // `updateToLatestSchemaVersion` to the server side.
-export function addAltVariantObject (street: StreetState): void {
+export function addAltVariantObject(street: StreetState) {
   street.segments = street.segments.map((segment) => {
     // Alternate method of storing variants as object key-value pairs,
     // instead of a string. We might gradually migrate toward this.
     segment.variant = getVariantInfo(segment.type, segment.variantString)
 
+    // Also use this loop to add empty warnings array
+    // Prevents bugs where things expect the array to be there
+    segment.warnings = [false]
+
     return segment
   })
 }
 
-export function setStreetCreatorId (newId: string): void {
+export function setStreetCreatorId(newId: string | null) {
   store.dispatch(saveCreatorId(newId))
 
   unifyUndoStack()
   updateLastStreetInfo()
 }
 
-export function setUpdateTimeToNow (): void {
+export function setUpdateTimeToNow() {
   const updateTime = new Date().toISOString()
   store.dispatch(setUpdateTime(updateTime))
   unifyUndoStack()
@@ -44,11 +52,11 @@ export function setUpdateTimeToNow (): void {
 
 let ignoreStreetChanges = false
 
-export function setIgnoreStreetChanges (value: boolean): void {
+export function setIgnoreStreetChanges(value: boolean) {
   ignoreStreetChanges = value
 }
 
-export function saveStreetToServerIfNecessary (): void {
+export function saveStreetToServerIfNecessary(force = false) {
   if (ignoreStreetChanges || store.getState().errors.abortEverything) {
     return
   }
@@ -56,7 +64,10 @@ export function saveStreetToServerIfNecessary (): void {
   const street = store.getState().street
   const currentData = trimStreetData(street)
 
-  if (JSON.stringify(currentData) !== JSON.stringify(_lastStreet)) {
+  if (
+    JSON.stringify(currentData) !== JSON.stringify(_lastStreet) ||
+    force === true
+  ) {
     if (street.editCount !== null) {
       store.dispatch(updateEditCount(street.editCount + 1))
     }
@@ -75,8 +86,8 @@ export function saveStreetToServerIfNecessary (): void {
 }
 
 // Copies only the data necessary for save/undo.
-export function trimStreetData (street: StreetState): StreetJson {
-  const newData: StreetJson = {
+export function trimStreetData(street: StreetState): Partial<StreetState> {
+  const newData: Partial<StreetState> = {
     schemaVersion: street.schemaVersion,
     showAnalytics: street.showAnalytics,
     capacitySource: street.capacitySource,
@@ -90,16 +101,26 @@ export function trimStreetData (street: StreetState): StreetJson {
     location: street.location,
     userUpdated: street.userUpdated,
     skybox: street.skybox,
+    weather: street.weather,
     boundary: street.boundary,
-    segments: street.segments.map((s) => ({
-      id: s.id,
-      type: s.type,
-      variantString: s.variantString,
-      width: s.width,
-      elevation: s.elevation,
-      slope: s.slope,
-      label: s.label
-    }))
+    segments: street.segments.map((s) => {
+      // TODO: don't manually copy, just delete the properties that don't exist?
+      const slice: SliceItemForServerTransmission = {
+        id: s.id,
+        type: s.type,
+        variantString: s.variantString,
+        width: s.width,
+        elevation: s.elevation,
+        slope: s.slope,
+        label: s.label,
+      }
+
+      if (s.elevationChanged === true) {
+        slice.elevationChanged = true
+      }
+
+      return slice
+    }),
   }
 
   if (street.editCount !== null) {
@@ -109,7 +130,7 @@ export function trimStreetData (street: StreetState): StreetJson {
   return newData
 }
 
-export function updateEverything (save: boolean = true): void {
+export function updateEverything(save = true) {
   setIgnoreStreetChanges(true)
   segmentsChanged()
   setIgnoreStreetChanges(false)

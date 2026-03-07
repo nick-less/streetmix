@@ -6,12 +6,11 @@ exports[`VariantSet > segment variants > renders segment buttons 1`] = `
     class="variants"
   >
     <div
-      class="popup-control-button-group"
+      class="popup-control-row popup-control-button-group"
     >
       <button
         class="btn variant-selected"
         data-testid="Inbound"
-        disabled=""
         type="button"
       >
         <svg
@@ -56,12 +55,11 @@ exports[`VariantSet > segment variants > renders segment buttons 1`] = `
       </button>
     </div>
     <div
-      class="popup-control-button-group"
+      class="popup-control-row popup-control-button-group"
     >
       <button
         class="btn variant-selected"
         data-testid="Asphalt"
-        disabled=""
         type="button"
       >
         <svg

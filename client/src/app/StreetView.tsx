@@ -1,90 +1,110 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { useSelector } from '~/src/store/hooks'
-import { usePrevious } from '~/src/util/usePrevious'
-import { Boundary } from '~/src/boundary'
-import { PopupContainerGroup } from '~/src/info_bubble/PopupContainer'
-import { SeaLevel } from '~/src/plugins/coastmix'
-import ResizeGuides from '../segments/ResizeGuides'
-import EmptySegmentContainer from '../segments/EmptySegmentContainer'
-import { animate, getElAbsolutePos } from '../util/helpers'
-import { MAX_CUSTOM_STREET_WIDTH } from '../streets/constants'
+import { useDispatch, useSelector } from '~/src/store/hooks.js'
+import { usePrevious } from '~/src/util/usePrevious.js'
+import { Boundary } from '~/src/boundary/index.js'
+import { PopupContainerGroup } from '~/src/info_bubble/PopupContainer.js'
+import { SeaLevel } from '~/src/plugins/coastmix/index.js'
+import { checkSeaLevel } from '~/src/plugins/coastmix/sea_level.js'
+import { setFloodDistance } from '~/src/store/slices/coastmix.js'
+import { ResizeGuides } from '../segments/ResizeGuides.js'
+import { EmptySegmentContainer } from '../segments/EmptySegmentContainer.js'
+import { animate, getElAbsolutePos } from '../util/helpers.js'
+import { MAX_CUSTOM_STREET_WIDTH } from '../streets/constants.js'
 import {
   TILE_SIZE,
   DRAGGING_TYPE_RESIZE,
-  BUILDING_SPACE
-} from '../segments/constants'
-import { updateStreetMargin } from '../segments/resizing'
-import SkyBox from '../sky/SkyBox'
-import ScrollIndicators from './ScrollIndicators'
-import StreetEditable from './StreetEditable'
+  BUILDING_SPACE,
+} from '../segments/constants.js'
+import { updateStreetMargin } from '../segments/resizing.js'
+import { SkyBox } from '../sky/SkyBox/index.js'
+import { ScrollIndicators } from './ScrollIndicators.js'
+import { StreetEditable } from './StreetEditable.js'
 import './StreetView.css'
 
 const SEGMENT_RESIZED = 1
 const STREETVIEW_RESIZED = 2
+
+const INDICATOR_ARROWS_MIN = 2
+const INDICATOR_ARROWS_MAX = 6
 
 /**
  * Based on street width and scroll position, determine how many
  * left and right "scroll indicator" arrows to display. This number
  * is calculated as the street scrolls and stored in state.
  */
-function calculateScrollIndicators (
-  el: HTMLDivElement | null,
+function calculateScrollIndicators(
+  el: HTMLElement | null,
   streetWidth: number
 ): { left: number; right: number } | undefined {
   if (el === null) return
 
-  let scrollIndicatorsLeft
-  let scrollIndicatorsRight
+  let arrowsLeft
+  let arrowsRight
 
-  if (el.scrollWidth <= el.offsetWidth) {
-    scrollIndicatorsLeft = 0
-    scrollIndicatorsRight = 0
+  // 1px buffer on the offsetWidth to handle some rounding issues
+  // where scrollWidth is consistently 1px wider
+  if (el.scrollWidth <= el.offsetWidth + 1) {
+    arrowsLeft = 0
+    arrowsRight = 0
   } else {
+    // A percentage (between 0 - 1) of how far scrolled
+    // 0 = all the way to the left,
+    // 1 = all the way to the right
+    // It is possible to scroll close to 1, but not actually hit it
+    // (not sure why that happens...)
     const left = el.scrollLeft / (el.scrollWidth - el.offsetWidth)
 
-    // TODO const off max width street
-    let posMax = Math.round((streetWidth / MAX_CUSTOM_STREET_WIDTH) * 6)
-    if (posMax < 2) {
-      posMax = 2
-    }
+    // The wider the street, the more arrows will be displayed
+    // There will be at minimum 2 arrows and a maximum of 6
+    const totalArrows = Math.max(
+      Math.round(
+        (streetWidth / MAX_CUSTOM_STREET_WIDTH) * INDICATOR_ARROWS_MAX
+      ),
+      INDICATOR_ARROWS_MIN
+    )
 
-    scrollIndicatorsLeft = Math.round(posMax * left)
-    if (left > 0 && scrollIndicatorsLeft === 0) {
-      scrollIndicatorsLeft = 1
+    // Split the arrows between left and right sides, based on the percentage
+    // distance scrolled. As long as we haven't scrolled fully to the left,
+    // there will always be 1 arrow on the left side.
+    arrowsLeft = Math.round(totalArrows * left)
+    if (left > 0 && arrowsLeft === 0) {
+      arrowsLeft = 1
     }
-    if (left < 1.0 && scrollIndicatorsLeft === posMax) {
-      scrollIndicatorsLeft = posMax - 1
-    }
-    scrollIndicatorsRight = posMax - scrollIndicatorsLeft
+    arrowsRight = totalArrows - arrowsLeft
   }
 
   return {
-    left: scrollIndicatorsLeft,
-    right: scrollIndicatorsRight
+    left: arrowsLeft,
+    right: arrowsRight,
   }
 }
 
-function StreetView (): React.ReactElement {
+export function StreetView() {
   const [scrollIndicators, setScrollIndicators] = useState({
     left: 0,
-    right: 0
+    right: 0,
   })
   const [scrollPos, setScrollPos] = useState(0)
-  const [resizeType, setResizeType] = useState<number | null>(null)
-  const [boundaryWidth, setBoundaryWidth] = useState(0)
+  const [resizeType, setResizeType] = useState<number>()
+  const [boundaryWidth, setBoundaryWidth] = useState(BUILDING_SPACE)
 
-  const sectionEl = useRef<HTMLDivElement>(null)
+  const sectionEl = useRef<HTMLElement>(null)
   const sectionCanvasEl = useRef<HTMLCanvasElement>(null)
+  const slicesEl = useRef<HTMLDivElement>(null)
 
   const street = useSelector((state) => state.street)
   const draggingType = useSelector((state) => state.ui.draggingType)
+  const { seaLevelRise, stormSurge, floodDirection } = useSelector(
+    (state) => state.coastmix
+  )
+  const dispatch = useDispatch()
 
   // Keep previous state for comparisons (ported from legacy behavior)
   const prevState = usePrevious({
     boundaryWidth,
     resizeType,
-    street
+    street,
   })
 
   const onResize = useCallback((): number | undefined => {
@@ -102,8 +122,28 @@ function StreetView (): React.ReactElement {
     sectionCanvasEl.current.style.width = streetWidth + 'px'
     sectionCanvasEl.current.style.left = streetSectionCanvasLeft + 'px'
 
+    // Since flooding relies on sectionCanvasEl width being set, calculate
+    // flood distance here. This can change if we start calculating
+    // distance in actual distance values rather than on screen pixel values.
+    const floodDistance = checkSeaLevel(
+      street.segments,
+      slicesEl.current,
+      sectionCanvasEl.current,
+      seaLevelRise,
+      stormSurge,
+      floodDirection
+    )
+    dispatch(setFloodDistance(floodDistance))
+
     return STREETVIEW_RESIZED
-  }, [street.width])
+  }, [
+    street.width,
+    street.segments,
+    dispatch,
+    seaLevelRise,
+    stormSurge,
+    floodDirection,
+  ])
 
   const handleStreetResize = useCallback(() => {
     // Place all scroll-based positioning effects inside of a "raf"
@@ -147,7 +187,7 @@ function StreetView (): React.ReactElement {
         scrollLeft += deltaX
       } else {
         const streetWidth = street.width * TILE_SIZE
-        const currBuildingSpace = boundaryWidth ?? BUILDING_SPACE
+        const currBuildingSpace = boundaryWidth
         scrollLeft =
           (streetWidth + currBuildingSpace * 2 - window.innerWidth) / 2
       }
@@ -165,7 +205,7 @@ function StreetView (): React.ReactElement {
     //    building width
     if (
       prevState?.boundaryWidth !== boundaryWidth ||
-      (prevState?.resizeType === STREETVIEW_RESIZED && resizeType !== null)
+      (prevState?.resizeType === STREETVIEW_RESIZED && resizeType !== undefined)
     ) {
       const deltaX = boundaryWidth - (prevState?.boundaryWidth ?? 0)
 
@@ -184,7 +224,7 @@ function StreetView (): React.ReactElement {
         resizeStreetExtent(SEGMENT_RESIZED, true)
       }
     }
-  }, [boundaryWidth, resizeType, updateScrollLeft])
+  }, [boundaryWidth, resizeType, updateScrollLeft, prevState])
 
   useEffect(() => {
     // Updating margins when segment is resized by dragging is handled in resizing.js
@@ -201,9 +241,9 @@ function StreetView (): React.ReactElement {
       const dontDelay = resizeType === STREETVIEW_RESIZED
       resizeStreetExtent(resizeType, dontDelay)
     }
-  }, [street.occupiedWidth])
+  }, [street, prevState, draggingType])
 
-  function resizeStreetExtent (resizeType: number, dontDelay: boolean): void {
+  function resizeStreetExtent(resizeType: number, dontDelay: boolean): void {
     const marginUpdated = updateStreetMargin(
       sectionCanvasEl.current,
       sectionEl.current,
@@ -218,7 +258,7 @@ function StreetView (): React.ReactElement {
   /**
    * Event handler for street scrolling.
    */
-  function handleStreetScroll (event: React.UIEvent<HTMLDivElement>): void {
+  function handleStreetScroll(_event: React.UIEvent<HTMLElement>): void {
     // Place all scroll-based positioning effects inside of a "raf"
     // callback for better performance.
     window.requestAnimationFrame(() => {
@@ -234,7 +274,7 @@ function StreetView (): React.ReactElement {
     })
   }
 
-  function scrollStreet (left: boolean, far = false): void {
+  function scrollStreet(left: boolean, far = false): void {
     const el = sectionEl.current
     if (!el) return
 
@@ -257,7 +297,7 @@ function StreetView (): React.ReactElement {
     animate(el, { scrollLeft: newScrollLeft }, 300)
   }
 
-  function getBoundaryWidth (el: HTMLDivElement | null): void {
+  function getBoundaryWidth(el: HTMLElement | null): void {
     if (el === null) return
     const pos = getElAbsolutePos(el)
 
@@ -267,10 +307,10 @@ function StreetView (): React.ReactElement {
     }
 
     setBoundaryWidth(width)
-    setResizeType(null)
+    setResizeType(undefined)
   }
 
-  function getStreetScrollPosition (): number {
+  function getStreetScrollPosition(): number {
     return sectionEl.current?.scrollLeft ?? 0
   }
 
@@ -281,7 +321,7 @@ function StreetView (): React.ReactElement {
    * this function after a render. Do not set state or call other side effects
    * from this function.
    */
-  function updatePerspective (el: HTMLElement | null): void {
+  function updatePerspective(el: HTMLElement | null): void {
     if (el === null) return
 
     const pos = getElAbsolutePos(el)
@@ -311,6 +351,7 @@ function StreetView (): React.ReactElement {
                 setBoundaryWidth={getBoundaryWidth}
                 updatePerspective={updatePerspective}
                 draggingType={draggingType}
+                ref={slicesEl}
               />
               <Boundary
                 position="right"
@@ -319,20 +360,19 @@ function StreetView (): React.ReactElement {
               />
               <ResizeGuides />
               <EmptySegmentContainer />
-              <SeaLevel scrollPos={scrollPos} />
+              <SeaLevel boundaryWidth={boundaryWidth} scrollPos={scrollPos} />
               <div className="street-section-ground" />
             </section>
           </PopupContainerGroup>
-          <ScrollIndicators
-            left={scrollIndicators.left}
-            right={scrollIndicators.right}
-            scrollStreet={scrollStreet}
-          />
         </section>
+        <div id="street-section-popup-boundary" />
       </section>
       <SkyBox scrollPos={scrollPos} />
+      <ScrollIndicators
+        left={scrollIndicators.left}
+        right={scrollIndicators.right}
+        scrollStreet={scrollStreet}
+      />
     </>
   )
 }
-
-export default StreetView

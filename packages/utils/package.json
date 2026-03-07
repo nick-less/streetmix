@@ -1,6 +1,6 @@
 {
   "name": "@streetmix/utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "utilities shared between client/server",
   "repository": {
     "type": "git",
@@ -11,7 +11,7 @@
   "type": "module",
   "main": "build/index.js",
   "scripts": {
-    "build": "tsc --project tsconfig.json --outDir build",
+    "build": "tsc --project tsconfig.json",
     "start": "echo Nothing to run!"
   },
   "dependencies": {}

@@ -1,16 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit'
-import type { PayloadAction } from '@reduxjs/toolkit'
 
-interface CoastmixState {
-  controlsVisible: boolean
-  seaLevelRise: number
-  stormSurge: boolean
-}
+import type { PayloadAction } from '@reduxjs/toolkit'
+import type { CoastmixState, FloodDirection } from '@streetmix/types'
 
 const initialState: CoastmixState = {
   controlsVisible: false,
   seaLevelRise: 0,
-  stormSurge: false
+  stormSurge: false,
+  floodDirection: 'none',
+  floodDistance: null,
 }
 
 const coastmixSlice = createSlice({
@@ -18,37 +16,55 @@ const coastmixSlice = createSlice({
   initialState,
 
   reducers: {
-    setCoastmixState (state, action: PayloadAction<CoastmixState>) {
+    setCoastmixState(state, action: PayloadAction<CoastmixState>) {
       return {
         ...state,
-        ...action.payload
+        ...action.payload,
       }
     },
 
-    showCoastalFloodingPanel (state) {
+    showCoastalFloodingPanel(state) {
       state.controlsVisible = true
     },
 
-    hideCoastalFloodingPanel (state) {
+    hideCoastalFloodingPanel(state) {
       state.controlsVisible = false
     },
 
-    setSeaLevelRise (state, action: PayloadAction<number>) {
+    toggleCoastalFloodingPanel(state) {
+      state.controlsVisible = !state.controlsVisible
+    },
+
+    setSeaLevelRise(state, action: PayloadAction<number>) {
       state.seaLevelRise = action.payload
     },
 
-    setStormSurge (state, action: PayloadAction<boolean>) {
+    setFloodDirection(
+      state,
+      action: PayloadAction<FloodDirection | undefined>
+    ) {
+      state.floodDirection = action.payload ?? 'none'
+    },
+
+    setFloodDistance(state, action: PayloadAction<number | null>) {
+      state.floodDistance = action.payload
+    },
+
+    setStormSurge(state, action: PayloadAction<boolean>) {
       state.stormSurge = action.payload
-    }
-  }
+    },
+  },
 })
 
 export const {
   setCoastmixState,
   showCoastalFloodingPanel,
   hideCoastalFloodingPanel,
+  toggleCoastalFloodingPanel,
   setSeaLevelRise,
-  setStormSurge
+  setFloodDirection,
+  setFloodDistance,
+  setStormSurge,
 } = coastmixSlice.actions
 
 export default coastmixSlice.reducer

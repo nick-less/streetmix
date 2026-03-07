@@ -12,12 +12,12 @@ exports[`PaletteContainer > renders 1`] = `
         class="palette-commands palette-commands-left"
       >
         <button
+          aria-label="Environment editor"
           class="btn"
           type="button"
         >
           <svg
             data-icon="sun"
-            data-icon-source="test"
           />
         </button>
       </div>
@@ -33,7 +33,7 @@ exports[`PaletteContainer > renders 1`] = `
         >
           <svg
             data-icon="chevron-left"
-            data-icon-source="test"
+            size="24"
           />
         </button>
         <div
@@ -62,7 +62,6 @@ exports[`PaletteContainer > renders 1`] = `
               </button>
               <svg
                 data-icon="lock"
-                data-icon-source="test"
               />
             </li>
           </ul>
@@ -76,7 +75,7 @@ exports[`PaletteContainer > renders 1`] = `
         >
           <svg
             data-icon="chevron-right"
-            data-icon-source="test"
+            size="24"
           />
         </button>
       </div>
@@ -84,25 +83,23 @@ exports[`PaletteContainer > renders 1`] = `
         class="palette-commands palette-commands-right"
       >
         <button
+          aria-label="Undo"
           class="btn"
-          data-testid="undo"
           disabled=""
           type="button"
         >
           <svg
             data-icon="undo"
-            data-icon-source="test"
           />
         </button>
         <button
+          aria-label="Redo"
           class="btn"
-          data-testid="redo"
           disabled=""
           type="button"
         >
           <svg
             data-icon="redo"
-            data-icon-source="test"
           />
         </button>
       </div>

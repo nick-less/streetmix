@@ -1,8 +1,8 @@
-import { debug } from '../preinit/debug_settings'
-import { normalizeSlug } from '../util/helpers'
+import { debug } from '../preinit/debug_settings.js'
+import { normalizeSlug } from '../util/helpers.js'
 import store from '../store'
-import { setGalleryUserId } from '../store/slices/gallery'
-import { saveCreatorId, saveStreetId } from '../store/slices/street'
+import { setGalleryUserId } from '../store/slices/gallery.js'
+import { saveCreatorId, saveStreetId } from '../store/slices/street.js'
 import {
   URL_NEW_STREET,
   JUST_SIGNED_IN_PATH,
@@ -11,21 +11,22 @@ import {
   URL_RESERVED_PREFIX,
   URL_SURVEY_FINISHED,
   RESERVED_URLS,
-  STREET_TEMPLATES
-} from './constants'
-import { setMode, MODES } from './mode'
-import type { StreetState } from '@streetmix/types'
+  STREET_TEMPLATES,
+} from './constants.js'
+import { setMode, MODES } from './mode.js'
+
+import type { StreetAPIResponse } from '@streetmix/types'
 
 // Used as a placeholder in URLs when the street is by an anonymous user
 export const ANONYMOUS_USER_ID_FRAGMENT = '-'
 
 let errorUrl = ''
 
-export function getErrorUrl (): string {
+export function getErrorUrl(): string {
   return errorUrl
 }
 
-export function processUrl (): void {
+export function processUrl(): void {
   // Get current pathname. The pathname will contain an initial `/` followed
   // by the path of the URL. The root pathname should always be `/`. It may
   // be possible for the URL to contain a trailing slash, but we don't want
@@ -54,13 +55,8 @@ export function processUrl (): void {
       case STREET_TEMPLATES.COPY:
         setMode(MODES.NEW_STREET_COPY_LAST, { type })
         break
-      case STREET_TEMPLATES.EMPTY:
-      case STREET_TEMPLATES.HARBORWALK:
-      case STREET_TEMPLATES.COASTAL_ROAD:
-      case STREET_TEMPLATES.BEACH:
-      case STREET_TEMPLATES.DEFAULT:
       default:
-        setMode(MODES.NEW_STREET, { type })
+        setMode(MODES.NEW_STREET, { type: type ?? STREET_TEMPLATES.DEFAULT })
         break
     }
 
@@ -117,7 +113,7 @@ export function processUrl (): void {
     const namespacedId = Number.parseInt(urlParts[1], 10)
 
     if (creatorId.charAt(0) === URL_RESERVED_PREFIX) {
-      creatorId = creatorId.substr(1)
+      creatorId = creatorId.slice(1)
     }
 
     store.dispatch(saveCreatorId(creatorId))
@@ -137,7 +133,7 @@ export function processUrl (): void {
   }
 }
 
-export function getStreetUrl (street: StreetState): string {
+export function getStreetUrl(street: StreetAPIResponse): string {
   let url = '/'
   if (street.creatorId) {
     // Add a initial slash to the creator check to match reserved paths
@@ -163,8 +159,8 @@ export function getStreetUrl (street: StreetState): string {
   return url
 }
 
-export function updatePageUrl (
-  forceGalleryUrl: boolean,
+export function updatePageUrl(
+  forceGalleryUrl: boolean = false,
   userId: string | null = null
 ): void {
   let url: string
