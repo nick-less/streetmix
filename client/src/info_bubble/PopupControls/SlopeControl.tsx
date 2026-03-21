@@ -43,7 +43,7 @@ export function SlopeControl({ position }: SlopeControlProps) {
   })
 
   return (
-    <div className="popup-control-row">
+    <div className="popup-control-row" data-tour-id="slope-control">
       <div className="popup-control-label">
         <Tooltip label={label} placement="left">
           <span className="popup-control-icon">
@@ -57,6 +57,7 @@ export function SlopeControl({ position }: SlopeControlProps) {
           checked={isSloped}
           disabled={!allowSlope}
           aria-label={label}
+          data-tour-id="slope-control-switch"
         />
       </Tooltip>
     </div>

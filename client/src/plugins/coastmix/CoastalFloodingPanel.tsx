@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useShepherd } from 'react-shepherd'
 
 import { useSelector, useDispatch } from '~/src/store/hooks.js'
 import {
@@ -19,6 +20,7 @@ import type { FloodDirection } from '@streetmix/types'
 export function CoastalFloodingPanel() {
   const coastmix = useSelector((state) => state.coastmix)
   const dispatch = useDispatch()
+  const Shepherd = useShepherd()
 
   const {
     controlsVisible,
@@ -64,11 +66,19 @@ export function CoastalFloodingPanel() {
     message = '👉 Select a flooding direction.'
   } else {
     if (floodDistance === null) {
-      message = '❌ This scenario does not address sea level rise!'
+      message = '❌ This configuration does not address sea level rise!'
       messageClassNames.push('flood-controls-warning')
     } else {
-      message = '✅ This scenario is addressing sea level rise!'
+      message = '✅ This configuration is addressing sea level rise!'
       messageClassNames.push('flood-controls-success')
+
+      // Manually control the tour here
+      if (
+        Shepherd.activeTour &&
+        Shepherd.activeTour.currentStep.id === 'coastmix-practice-10'
+      ) {
+        Shepherd.activeTour.next()
+      }
     }
   }
 
@@ -82,7 +92,7 @@ export function CoastalFloodingPanel() {
       position={{ x: 30, y: 65 }}
     >
       <div className="popup-controls flood-controls-content">
-        <div className="popup-control-group">
+        <div className="popup-control-group" data-tour-id="sea-level-control">
           <div className="popup-control-label">Sea level rise</div>
           <div>
             <Button
@@ -95,6 +105,7 @@ export function CoastalFloodingPanel() {
             </Button>
             <Button
               className={`sea-level-button${seaLevelRise === 2030 ? ' sea-level-selected' : ''}`}
+              data-tour-id="2030-sea-level-rise"
               onClick={() => {
                 changeSeaLevelRise(2030)
               }}
@@ -119,11 +130,14 @@ export function CoastalFloodingPanel() {
             </Button>
           </div>
         </div>
-        <div className="popup-control-group">
+        <div className="popup-control-group" data-tour-id="storm-surge-control">
           <div className="popup-control-label">Storm surge</div>
           <Switch onCheckedChange={toggleStormSurge} checked={stormSurge} />
         </div>
-        <div className="popup-control-group">
+        <div
+          className="popup-control-group"
+          data-tour-id="flood-direction-control"
+        >
           <div className="popup-control-label">Flood direction</div>
           <div>
             <select value={floodDirection} onChange={changeFloodDirection}>
@@ -134,7 +148,12 @@ export function CoastalFloodingPanel() {
             </select>
           </div>
         </div>
-        <div className={messageClassNames.join(' ')}>{message}</div>
+        <div
+          className={messageClassNames.join(' ')}
+          data-tour-id="flooding-message"
+        >
+          {message}
+        </div>
       </div>
     </FloatingPanel>
   )
